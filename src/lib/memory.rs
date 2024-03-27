@@ -53,8 +53,10 @@ impl Memory {
             return Err("failed to open process".to_string());
         };
 
-        let mut entry = MODULEENTRY32::default();
-        entry.dwSize = std::mem::size_of_val(&entry) as u32;
+        let mut entry = MODULEENTRY32 {
+            dwSize: std::mem::size_of::<MODULEENTRY32>() as u32,
+            ..Default::default()
+        };
 
         let base_module = match unsafe { Module32First(snap_handle, &mut entry) } {
             Ok(_) => Module::from(entry),
@@ -106,8 +108,8 @@ impl Memory {
         match unsafe {
             ReadProcessMemory(
                 self.process_handle,
-                address.0 as *const c_void,
-                buffer.as_mut_ptr() as *mut c_void,
+                address.0 as LPCVOID,
+                buffer.as_mut_ptr() as LPVOID,
                 std::mem::size_of::<T>(),
                 None,
             )
@@ -117,13 +119,13 @@ impl Memory {
         }
     }
 
-    pub fn write<T>(&self, address: u32, data: T) -> Result<usize, ()> {
+    pub fn write<T>(&self, address: DWORD, data: T) -> Result<usize, ()> {
         let mut bytes: usize = 0;
         match unsafe {
             WriteProcessMemory(
                 self.process_handle,
-                address as *const c_void,
-                &data as *const T as *const c_void,
+                address as LPCVOID,
+                &data as *const T as LPCVOID,
                 std::mem::size_of_val(&data),
                 Some(&mut bytes),
             )
@@ -153,12 +155,6 @@ pub struct Module {
     pub size: u32,
     pub id: u32,
     entry: MODULEENTRY32,
-}
-
-impl Module {
-    pub fn entry(&self) -> MODULEENTRY32 {
-        self.entry
-    }
 }
 
 impl From<MODULEENTRY32> for Module {
