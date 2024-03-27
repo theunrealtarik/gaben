@@ -5,15 +5,13 @@ use std::mem::MaybeUninit;
 use std::path::PathBuf;
 
 use sysinfo::{Pid, System};
-use windows::Win32::Foundation::{CloseHandle, HANDLE, HMODULE};
+use windows::Win32::Foundation::{CloseHandle, HANDLE};
 use windows::Win32::System::Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory};
 use windows::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32, TH32CS_SNAPMODULE,
     TH32CS_SNAPMODULE32,
 };
-use windows::Win32::System::ProcessStatus::{
-    EnumProcessModulesEx, GetModuleBaseNameA, GetModuleFileNameExA, LIST_MODULES_ALL,
-};
+use windows::Win32::System::ProcessStatus::{GetModuleBaseNameA, GetModuleFileNameExA};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
 
 use super::prelude::*;
@@ -30,6 +28,7 @@ pub struct Memory {
 #[allow(dead_code)]
 impl Memory {
     pub fn new(process_name: &str) -> Result<Self, String> {
+        let mut modules: HashMap<String, Module> = HashMap::new();
         let mut system = System::new();
         system.refresh_all();
 
@@ -54,54 +53,40 @@ impl Memory {
             return Err("failed to open process".to_string());
         };
 
-        let Ok(base_module) = Module::first(process_id) else {
-            return Err("failed to retrieve process base module".to_string());
-        };
-
-        let mut entry = base_module.entry().clone();
+        let mut entry = MODULEENTRY32::default();
         entry.dwSize = std::mem::size_of_val(&entry) as u32;
 
-        let mut modules: HashMap<String, Module> = HashMap::new();
-        let mut h_mods: [HMODULE; 1024] = unsafe { std::mem::zeroed() };
-        let mut needed: u32 = 0;
+        let base_module = match unsafe { Module32First(snap_handle, &mut entry) } {
+            Ok(_) => Module::from(entry),
+            Err(_) => return Err(String::from("failed to retrieve process base module")),
+        };
 
-        if let Ok(_) = unsafe {
-            EnumProcessModulesEx(
-                process_handle,
-                h_mods.as_mut_ptr(),
-                std::mem::size_of::<[HMODULE; 1024]>() as u32,
-                &mut needed,
-                LIST_MODULES_ALL,
-            )
-        } {
-            let modules_count = needed / std::mem::size_of::<HANDLE>() as u32;
-            for i in 0..modules_count {
-                let mut filename: [u8; u8::MAX as usize] = [0u8; u8::MAX as usize];
-                let mut basename: [u8; u8::MAX as usize] = [0u8; u8::MAX as usize];
+        loop {
+            let module_handle = entry.hModule;
 
-                unsafe {
-                    GetModuleFileNameExA(process_handle, h_mods[i as usize], &mut filename);
-                    GetModuleBaseNameA(process_handle, h_mods[i as usize], &mut basename);
-                }
+            let mut filename: [u8; u8::MAX as usize] = [0u8; u8::MAX as usize];
+            let mut basename: [u8; u8::MAX as usize] = [0u8; u8::MAX as usize];
 
-                let mut module = Module::from(entry);
-                module.path = PathBuf::from(
-                    String::from_utf8_lossy(&filename)
-                        .trim_end_matches(char::from(0))
-                        .to_string(),
-                );
-                module.name = String::from_utf8_lossy(&basename)
+            unsafe {
+                GetModuleFileNameExA(process_handle, module_handle, &mut filename);
+                GetModuleBaseNameA(process_handle, module_handle, &mut basename);
+            }
+
+            let mut module = Module::from(entry);
+            module.path = PathBuf::from(
+                String::from_utf8_lossy(&filename)
                     .trim_end_matches(char::from(0))
-                    .to_string()
-                    .to_lowercase();
-                module.id = entry.th32ModuleID;
-                modules.insert(module.name.clone(), module);
+                    .to_string(),
+            );
+            module.name = String::from_utf8_lossy(&basename)
+                .trim_end_matches(char::from(0))
+                .to_string()
+                .to_lowercase();
+            module.id = entry.th32ModuleID;
+            modules.insert(module.name.clone(), module);
 
-                unsafe {
-                    if Module32Next(snap_handle, &mut entry).is_err() {
-                        continue;
-                    }
-                }
+            if unsafe { Module32Next(snap_handle, &mut entry).is_err() } {
+                break;
             }
         }
 
@@ -115,13 +100,13 @@ impl Memory {
         })
     }
 
-    pub fn read<T>(&self, address: u32) -> Result<T, windows::core::Error> {
+    pub fn read<T>(&self, address: LPBYTE) -> Result<T, windows::core::Error> {
         let mut buffer: MaybeUninit<T> = MaybeUninit::uninit();
 
         match unsafe {
             ReadProcessMemory(
                 self.process_handle,
-                address as *const c_void,
+                address.0 as *const c_void,
                 buffer.as_mut_ptr() as *mut c_void,
                 std::mem::size_of::<T>(),
                 None,
@@ -164,28 +149,14 @@ impl Drop for Memory {
 pub struct Module {
     pub name: String,
     pub path: PathBuf,
-    pub address: DWORD,
+    pub address: LPBYTE,
     pub size: u32,
     pub id: u32,
     entry: MODULEENTRY32,
 }
 
 impl Module {
-    fn first(process_id: Pid) -> Result<Self, ()> {
-        if let Ok(snap_handle) =
-            unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id.as_u32()) }
-        {
-            let mut entry = MODULEENTRY32::default();
-            entry.dwSize = std::mem::size_of_val(&entry) as u32;
-
-            unsafe { Module32First(snap_handle, &mut entry).unwrap() };
-            return Ok(Self::from(entry));
-        }
-
-        Err(())
-    }
-
-    fn entry(&self) -> MODULEENTRY32 {
+    pub fn entry(&self) -> MODULEENTRY32 {
         self.entry
     }
 }
@@ -201,7 +172,7 @@ impl From<MODULEENTRY32> for Module {
                     .map(|&i| i as u8)
                     .collect::<Vec<u8>>(),
             )),
-            address: entry.modBaseAddr as u32,
+            address: LPBYTE(entry.modBaseAddr),
             size: entry.dwSize,
             id: entry.th32ModuleID,
             entry,
