@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub fn stringify_bytes_u8<T>(bytes: T) -> String
 where
     T: IntoIterator,

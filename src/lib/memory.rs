@@ -1,6 +1,5 @@
 extern crate windows;
 
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
@@ -43,23 +42,24 @@ impl Memory {
             return Err("process was not found".to_string());
         };
 
-        let snap_handle = unsafe {
+        let Ok(snap_handle) = (unsafe {
             CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process_id.as_u32())
-                .unwrap()
+        }) else {
+            return Err("failed to create a snapshot for modules".to_string());
         };
 
-        let process_handle =
-            match unsafe { OpenProcess(PROCESS_ALL_ACCESS, false, process_id.as_u32()) } {
-                Ok(p) => p,
-                Err(_) => {
-                    return Err("failed to open process".to_string());
-                }
-            };
+        let Ok(process_handle) =
+            (unsafe { OpenProcess(PROCESS_ALL_ACCESS, false, process_id.as_u32()) })
+        else {
+            return Err("failed to open process".to_string());
+        };
 
-        let mut entry = MODULEENTRY32::default();
-        entry.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
+        let Ok(base_module) = Module::first(process_id) else {
+            return Err("failed to retrieve process base module".to_string());
+        };
 
-        let base_module = Module::from(process_id);
+        let mut entry = base_module.entry().clone();
+        entry.dwSize = std::mem::size_of_val(&entry) as u32;
 
         let mut modules: HashMap<String, Module> = HashMap::new();
         let mut h_mods: [HMODULE; 1024] = unsafe { std::mem::zeroed() };
@@ -85,7 +85,6 @@ impl Memory {
                 }
 
                 let mut module = Module::from(entry);
-
                 module.path = PathBuf::from(
                     String::from_utf8_lossy(&filename)
                         .trim_end_matches(char::from(0))
@@ -96,8 +95,8 @@ impl Memory {
                     .to_string()
                     .to_lowercase();
                 module.id = entry.th32ModuleID;
-
                 modules.insert(module.name.clone(), module);
+
                 unsafe {
                     if Module32Next(snap_handle, &mut entry).is_err() {
                         continue;
@@ -106,6 +105,7 @@ impl Memory {
             }
         }
 
+        unsafe { CloseHandle(snap_handle).unwrap() };
         Ok(Self {
             process_id,
             process_handle,
@@ -148,39 +148,45 @@ impl Memory {
         }
     }
 
-    pub fn close_handle(&self) {
-        unsafe { CloseHandle(self.process_handle).unwrap() };
+    pub fn close_process_handle(&self) -> Result<(), windows::core::Error> {
+        unsafe { CloseHandle(self.process_handle) }
     }
 }
 
 impl Drop for Memory {
     fn drop(&mut self) {
-        self.close_handle();
+        self.close_process_handle().unwrap();
     }
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Module {
     pub name: String,
     pub path: PathBuf,
     pub address: DWORD,
     pub size: u32,
     pub id: u32,
+    entry: MODULEENTRY32,
 }
 
-impl From<Pid> for Module {
-    fn from(process_id: Pid) -> Self {
+impl Module {
+    fn first(process_id: Pid) -> Result<Self, ()> {
         if let Ok(snap_handle) =
             unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process_id.as_u32()) }
         {
             let mut entry = MODULEENTRY32::default();
-            entry.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
+            entry.dwSize = std::mem::size_of_val(&entry) as u32;
+
             unsafe { Module32First(snap_handle, &mut entry).unwrap() };
-            Self::from(entry)
-        } else {
-            Self::default()
+            return Ok(Self::from(entry));
         }
+
+        Err(())
+    }
+
+    fn entry(&self) -> MODULEENTRY32 {
+        self.entry
     }
 }
 
@@ -198,6 +204,19 @@ impl From<MODULEENTRY32> for Module {
             address: entry.modBaseAddr as u32,
             size: entry.dwSize,
             id: entry.th32ModuleID,
+            entry,
         }
+    }
+}
+
+impl std::fmt::Debug for Module {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Module")
+            .field("name", &self.name)
+            .field("path", &self.path)
+            .field("address", &self.address)
+            .field("size", &self.size)
+            .field("id", &self.id)
+            .finish()
     }
 }
