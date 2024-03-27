@@ -1,5 +1,6 @@
 extern crate windows;
 
+use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
@@ -42,8 +43,10 @@ impl Memory {
             return Err("process was not found".to_string());
         };
 
-        let snap_handle =
-            unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE32, process_id.as_u32()).unwrap() };
+        let snap_handle = unsafe {
+            CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process_id.as_u32())
+                .unwrap()
+        };
 
         let process_handle =
             match unsafe { OpenProcess(PROCESS_ALL_ACCESS, false, process_id.as_u32()) } {
@@ -55,6 +58,8 @@ impl Memory {
 
         let mut entry = MODULEENTRY32::default();
         entry.dwSize = std::mem::size_of::<MODULEENTRY32>() as u32;
+
+        let base_module = Module::from(process_id);
 
         let mut modules: HashMap<String, Module> = HashMap::new();
         let mut h_mods: [HMODULE; 1024] = unsafe { std::mem::zeroed() };
@@ -105,7 +110,7 @@ impl Memory {
             process_id,
             process_handle,
             snap_handle,
-            base_module: Module::from(process_id),
+            base_module,
             modules,
         })
     }
@@ -159,7 +164,7 @@ impl Drop for Memory {
 pub struct Module {
     pub name: String,
     pub path: PathBuf,
-    pub address: u32,
+    pub address: DWORD,
     pub size: u32,
     pub id: u32,
 }
