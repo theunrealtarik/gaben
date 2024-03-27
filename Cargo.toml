@@ -1,0 +1,23 @@
+[package]
+name = "gaben"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "lib"
+path = "./src/lib/mod.rs"
+
+[dependencies]
+sysinfo = "0.30.7"
+
+[dependencies.windows]
+version = "0.54.0"
+features = [
+	"Win32_System",
+	"Win32_System_Diagnostics_Debug",
+	"Win32_System_Diagnostics_ToolHelp",
+	"Win32_System_ProcessStatus",
+	"Win32_System_Threading"
+]
