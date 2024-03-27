@@ -135,6 +135,28 @@ impl Memory {
         }
     }
 
+    pub fn calculate_pointer<T>(
+        &self,
+        base_address: LPBYTE,
+        offsets: Vec<isize>,
+    ) -> Result<LPBYTE, windows::core::Error> {
+        let mut pointer = base_address;
+
+        if offsets.is_empty() {
+            Ok(base_address)
+        } else {
+            let mut pointer = base_address;
+            for offset in offsets.iter() {
+                match self.read::<DWORD>(pointer) {
+                    Ok(addr) => pointer = LPBYTE(unsafe { pointer.0.offset(*offset) }),
+                    Err(err) => return Err(err),
+                }
+            }
+
+            Ok(pointer)
+        }
+    }
+
     pub fn close_process_handle(&self) -> Result<(), windows::core::Error> {
         unsafe { CloseHandle(self.process_handle) }
     }
