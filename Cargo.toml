@@ -8,8 +8,11 @@ edition = "2021"
 [lib]
 name = "lib"
 path = "./src/lib/mod.rs"
+doc = false
+
 
 [dependencies]
+clearscreen = "2.0.1"
 sysinfo = "0.30.7"
 
 [dependencies.windows]

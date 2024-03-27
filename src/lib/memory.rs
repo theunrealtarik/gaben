@@ -1,7 +1,6 @@
 extern crate windows;
 
 use std::collections::HashMap;
-use std::ffi::c_void;
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
 
@@ -13,8 +12,7 @@ use windows::Win32::System::Diagnostics::ToolHelp::{
     TH32CS_SNAPMODULE32,
 };
 use windows::Win32::System::ProcessStatus::{
-    EnumProcessModules, GetModuleBaseNameA, GetModuleBaseNameW, GetModuleFileNameExA,
-    GetModuleFileNameExW,
+    EnumProcessModulesEx, GetModuleBaseNameA, GetModuleFileNameExA, LIST_MODULES_ALL,
 };
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
 
@@ -63,11 +61,12 @@ impl Memory {
         let mut needed: u32 = 0;
 
         if let Ok(_) = unsafe {
-            EnumProcessModules(
+            EnumProcessModulesEx(
                 process_handle,
                 h_mods.as_mut_ptr(),
                 std::mem::size_of::<[HMODULE; 1024]>() as u32,
                 &mut needed,
+                LIST_MODULES_ALL,
             )
         } {
             let modules_count = needed / std::mem::size_of::<HANDLE>() as u32;
@@ -89,7 +88,8 @@ impl Memory {
                 );
                 module.name = String::from_utf8_lossy(&basename)
                     .trim_end_matches(char::from(0))
-                    .to_string();
+                    .to_string()
+                    .to_lowercase();
                 module.id = entry.th32ModuleID;
 
                 modules.insert(module.name.clone(), module);
@@ -110,7 +110,7 @@ impl Memory {
         })
     }
 
-    pub fn read<T>(&self, address: usize) -> Result<T, windows::core::Error> {
+    pub fn read<T>(&self, address: u32) -> Result<T, windows::core::Error> {
         let mut buffer: MaybeUninit<T> = MaybeUninit::uninit();
 
         match unsafe {
@@ -127,7 +127,7 @@ impl Memory {
         }
     }
 
-    pub fn write<T>(&self, address: usize, data: T) -> Result<usize, ()> {
+    pub fn write<T>(&self, address: u32, data: T) -> Result<usize, ()> {
         let mut bytes: usize = 0;
         match unsafe {
             WriteProcessMemory(
@@ -155,11 +155,11 @@ impl Drop for Memory {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Module {
     pub name: String,
     pub path: PathBuf,
-    pub address: *mut u8,
+    pub address: u32,
     pub size: u32,
     pub id: u32,
 }
@@ -190,21 +190,9 @@ impl From<MODULEENTRY32> for Module {
                     .map(|&i| i as u8)
                     .collect::<Vec<u8>>(),
             )),
-            address: entry.modBaseAddr,
-            size: entry.modBaseSize,
+            address: entry.modBaseAddr as u32,
+            size: entry.dwSize,
             id: entry.th32ModuleID,
-        }
-    }
-}
-
-impl Default for Module {
-    fn default() -> Self {
-        Self {
-            name: String::default(),
-            path: PathBuf::default(),
-            address: std::ptr::null_mut(),
-            size: 0,
-            id: 0,
         }
     }
 }
