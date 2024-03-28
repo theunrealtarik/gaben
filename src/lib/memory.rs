@@ -135,25 +135,40 @@ impl Memory {
         }
     }
 
-    pub fn calculate_pointer<T>(
+    pub fn calculate_pointer(
         &self,
         base_address: LPBYTE,
-        offsets: Vec<isize>,
+        offsets: &[isize],
     ) -> Result<LPBYTE, windows::core::Error> {
-        let mut pointer = base_address;
+        let mut current_address = base_address;
 
         if offsets.is_empty() {
-            Ok(base_address)
+            Ok(current_address)
         } else {
-            let mut pointer = base_address;
             for offset in offsets.iter() {
-                match self.read::<DWORD>(pointer) {
-                    Ok(addr) => pointer = LPBYTE(unsafe { pointer.0.offset(*offset) }),
+                match self.read::<LPBYTE>(current_address) {
+                    Ok(addr) => current_address = unsafe { addr.offset(*offset) },
                     Err(err) => return Err(err),
                 }
             }
 
-            Ok(pointer)
+            Ok(current_address)
+        }
+    }
+
+    pub fn read_pointer<T>(
+        &self,
+        address: LPBYTE,
+        offsets: Option<&[isize]>,
+    ) -> Result<T, windows::core::Error> {
+        let offsets = match offsets {
+            Some(o) => o,
+            None => &[],
+        };
+
+        match self.calculate_pointer(address, offsets) {
+            Ok(address) => self.read::<T>(address),
+            Err(err) => Err(err),
         }
     }
 
