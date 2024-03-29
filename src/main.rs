@@ -16,7 +16,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let local_player = unsafe { client.offset(offsets::LOCAL_PLAYER) };
 
         let health = process.read_pointer::<i32>(local_player, Some(&[offsets::HEALTH]))?;
-        println!("{:#?}", health);
     }
 
     Ok(())

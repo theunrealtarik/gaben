@@ -2,10 +2,10 @@ use std::thread;
 use std::time::Duration;
 
 fn main() {
-    let mut health = 100;
+    let health = 100;
+    println!("{:p}", &health);
 
     loop {
-        println!("health {:#?} {:p}", health, &health);
         thread::sleep(Duration::from_secs(1));
     }
 }

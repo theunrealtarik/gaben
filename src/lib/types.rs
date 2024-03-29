@@ -23,3 +23,10 @@ impl Default for LPBYTE {
         Self(std::ptr::null_mut())
     }
 }
+
+impl From<isize> for LPBYTE {
+    fn from(value: isize) -> Self {
+        let zeroed_pointer: *mut u8 = std::ptr::null_mut();
+        Self(unsafe { zeroed_pointer.offset(value) })
+    }
+}
