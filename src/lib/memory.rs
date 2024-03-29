@@ -119,19 +119,19 @@ impl Memory {
         }
     }
 
-    pub fn write<T>(&self, address: DWORD, data: T) -> Result<usize, ()> {
+    pub fn write<T>(&self, address: LPBYTE, data: T) -> Result<usize, windows::core::Error> {
         let mut bytes: usize = 0;
         match unsafe {
             WriteProcessMemory(
                 self.process_handle,
-                address as LPCVOID,
+                address.0 as LPCVOID,
                 &data as *const T as LPCVOID,
                 std::mem::size_of_val(&data),
                 Some(&mut bytes),
             )
         } {
             Ok(_) => Ok(bytes),
-            Err(_) => Err(()),
+            Err(err) => Err(err),
         }
     }
 

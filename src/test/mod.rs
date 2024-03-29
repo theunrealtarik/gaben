@@ -11,11 +11,7 @@ mod memory {
             .join("external")
             .join(PROCESS_NAME);
 
-        std::thread::spawn(move || {
-            Command::new(process_path)
-                .output()
-                .expect("failed to spawn external program")
-        });
+        std::thread::spawn(move || Command::new(process_path).output().unwrap());
     }
 
     #[test]
