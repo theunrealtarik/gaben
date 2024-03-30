@@ -65,7 +65,7 @@ mod time {
 
     #[test]
     #[allow(unused_assignments)]
-    fn timer() {
+    fn timer_once() {
         let timer = Timer::default();
         let mut data = false;
 
@@ -77,5 +77,22 @@ mod time {
         }
 
         assert!(data);
+    }
+
+    #[test]
+    fn timer_every() {
+        let mut timer = Timer::default();
+        let mut count = 0;
+
+        loop {
+            if timer.elapsed(Duration::from_secs(1)) {
+                count += 1;
+            }
+
+            if count >= 5 {
+                break;
+            }
+        }
+        assert_eq!(count, 5);
     }
 }

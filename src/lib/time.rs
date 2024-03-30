@@ -17,9 +17,14 @@ impl Timer {
         delta > duration
     }
 
-    pub fn every(&mut self, duration: Duration) -> bool {
-        let passed = self.once(duration);
-        self.0 = Instant::now();
-        passed
+    pub fn elapsed(&mut self, duration: Duration) -> bool {
+        let now = Instant::now();
+        let delta = now - self.0;
+        if delta > duration {
+            self.0 = Instant::now();
+            true
+        } else {
+            false
+        }
     }
 }

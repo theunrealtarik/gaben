@@ -4,7 +4,6 @@
     <CheatEntry>
       <ID>0</ID>
       <Description>"Client"</Description>
-      <LastState Value="9460301" RealAddress="7FF97DCF0000"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll</Address>
@@ -12,7 +11,6 @@
     <CheatEntry>
       <ID>6</ID>
       <Description>"Engine2"</Description>
-      <LastState Value="9460301" RealAddress="7FF99DB90000"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>engine2.dll</Address>
@@ -20,7 +18,7 @@
     <CheatEntry>
       <ID>1</ID>
       <Description>"Local Player"</Description>
-      <LastState Value="1602879488" RealAddress="7FF97F4271A8"/>
+      <ShowAsHex>1</ShowAsHex>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x17371A8</Address>
@@ -28,7 +26,6 @@
     <CheatEntry>
       <ID>2</ID>
       <Description>"Health"</Description>
-      <LastState Value="100" RealAddress="25E5F8A0334"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x17371A8</Address>
@@ -39,7 +36,6 @@
     <CheatEntry>
       <ID>4</ID>
       <Description>"Team"</Description>
-      <LastState Value="00000002" RealAddress="25E5F8A03CB"/>
       <ShowAsHex>1</ShowAsHex>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
@@ -51,7 +47,6 @@
     <CheatEntry>
       <ID>5</ID>
       <Description>"C4 (lol???)"</Description>
-      <LastState Value="69F63E3C" RealAddress="25E68861E8B"/>
       <ShowAsHex>1</ShowAsHex>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
@@ -63,7 +58,6 @@
     <CheatEntry>
       <ID>7</ID>
       <Description>"Game State"</Description>
-      <LastState Value="6" RealAddress="25ED6280880"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>engine2.dll + 0x513AC8</Address>
@@ -74,10 +68,48 @@
     <CheatEntry>
       <ID>9</ID>
       <Description>"Force Jump"</Description>
-      <LastState Value="256" RealAddress="7FF97F420530"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll+0x1730530</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>11</ID>
+      <Description>"Weapons0"</Description>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>10</ID>
+          <Description>"No description"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>7FFF965671A8+0x1308</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>12</ID>
+          <Description>"No description"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>4 Bytes</VariableType>
+          <Address>7FFF965684B0+0xc18</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>13</ID>
+          <Description>"No description"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <VariableType>Array of byte</VariableType>
+          <ByteLength>32</ByteLength>
+          <Address>7FFF965690C8</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>14</ID>
+      <Description>"No description"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>4 Bytes</VariableType>
+      <Address>client.dll + 0x17371A8</Address>
+      <Offsets>
+        <Offset>0x58</Offset>
+      </Offsets>
     </CheatEntry>
   </CheatEntries>
   <UserdefinedSymbols/>

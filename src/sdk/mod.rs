@@ -25,9 +25,11 @@ pub mod client_dll {
     pub const dwViewMatrix: isize = 0x19241A0;
     pub const dwViewRender: isize = 0x1924A20;
 
-    pub mod entity {
+    pub mod config {
         pub const m_iHealth: isize = 0x334; // int32_t
         pub const m_fFlags: isize = 0x3D4;
+        pub const m_hActiveWeapon: isize = 0x58;
+        pub const m_pClippingWeapon: isize = 0x1308; // C_CSWeaponBase*
     }
 }
 

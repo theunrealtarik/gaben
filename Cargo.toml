@@ -12,8 +12,10 @@ doc = false
 
 
 [dependencies]
+anyhow = "1.0.81"
 clearscreen = "2.0.1"
 delegate = "0.12.0"
+inputbot = "0.6.0"
 sysinfo = "0.30.7"
 winput = "0.2.5"
 
