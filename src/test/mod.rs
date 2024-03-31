@@ -1,38 +1,26 @@
+// open ../../external/program.exe
+
 #[cfg(test)]
 mod memory {
     use lib::prelude::*;
-    use std::{path::PathBuf, process::Command};
-
     const PROCESS_NAME: &str = "program.exe";
-
-    fn spawn_external() {
-        let process_path: PathBuf = std::env::current_dir()
-            .unwrap()
-            .join("external")
-            .join(PROCESS_NAME);
-
-        std::thread::spawn(move || Command::new(process_path).output().unwrap());
-    }
 
     #[test]
     fn open_process() {
-        spawn_external();
         Memory::new(PROCESS_NAME).unwrap();
     }
 
     #[test]
     fn process_base_module() {
-        spawn_external();
         let process = Memory::new(PROCESS_NAME).unwrap();
         assert_eq!(process.base_module.name, PROCESS_NAME);
     }
 
     #[test]
     fn read_write_process_memory() {
-        spawn_external();
         let process = Memory::new(PROCESS_NAME).unwrap();
         let Ok(pointer) = process.calculate_pointer(
-            unsafe { process.base_module.address.offset(0x241E0) },
+            process.base_module.address + 0x241E0,
             &[0x18, 0x18, 0xc8, 0x28, 0x8ec],
         ) else {
             panic!("failed to calculate pointer");
@@ -75,7 +63,6 @@ mod time {
                 break;
             }
         }
-
         assert!(data);
     }
 

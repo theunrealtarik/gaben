@@ -6,12 +6,11 @@ mod test;
 use lib::prelude::*;
 use sdk::prelude::*;
 
+use std::thread;
 use std::time::Duration;
 
 #[cfg(target_os = "windows")]
 fn main() -> Result<(), anyhow::Error> {
-    use std::thread;
-
     Keyboard::listen();
 
     // timers
@@ -22,39 +21,75 @@ fn main() -> Result<(), anyhow::Error> {
         let client = process.modules.get("client.dll").unwrap().address;
         let engine = process.modules.get("engine2.dll").unwrap().address;
 
-        let _game_state = process.read_pointer::<i32>(
-            unsafe { engine.offset(engine2_dll::dwNetworkGameClient) },
-            Some(&[engine2_dll::dwNetworkGameClient_signOnState]),
-        )?;
-
         loop {
-            let local_player = unsafe { client.offset(client_dll::dwLocalPlayerPawn) };
-            let Ok(health) =
-                process.read_pointer::<i32>(local_player, Some(&[client_dll::config::m_iHealth]))
+            let Ok(local_player) = process.read::<usize>(client + client_dll::dwLocalPlayerPawn)
             else {
                 continue;
             };
 
-            let force_jump = unsafe { client.offset(client_dll::dwForceJump) };
-            let player_flags = process
-                .read_pointer::<DWORD>(local_player, Some(&[client_dll::config::m_fFlags]))?;
+            let player_team = process.read::<u8>(local_player + client_dll::config::m_iTeamNum);
+            let health = process.read::<i32>(local_player + client_dll::config::m_iHealth)?;
 
-            let is_alive = health > 0 && health <= 100;
-            let is_grounded = player_flags & (1 << 0) != 0;
+            // let flags = process.read::<u32>(local_player + client_dll::config::m_fFlags)?;
+            // let force_jump = client + client_dll::dwForceJump;
+            // let is_grounded = flags & (1 << 0) != 0;
+            //
+            // if bunny_man.elapsed(Duration::from_millis(70)) {
+            //     if is_grounded {
+            //         process.write::<i32>(force_jump, PlayerJump::Plus as i32)?;
+            //     } else {
+            //         process.write::<i32>(force_jump, PlayerJump::Minus as i32)?;
+            //     }
+            // }
 
-            if !is_alive {
+            // let camera_servies =
+            //     process.read::<usize>(local_player + client_dll::config::m_pCameraServices)?;
+            // let is_scoped = process.read::<bool>(local_player + client_dll::config::m_bIsScoped)?;
+            //
+            // if !is_scoped {
+            //     process.write::<i32>(camera_servies + client_dll::config::m_iFOV, 320)?;
+            // }
+
+            let Ok(entity_list) = process.read::<usize>(client + client_dll::dwEntityList) else {
                 continue;
-            }
+            };
 
-            if bunny_man.elapsed(Duration::from_millis(70)) {
-                if is_grounded {
-                    process.write::<i32>(force_jump, PlayerJump::Plus as i32)?;
-                } else {
-                    process.write::<i32>(force_jump, PlayerJump::Minus as i32)?;
-                }
-            }
+            for i in 0..64 {
+                let Ok(entry) = process.read::<usize>(entity_list + 0x8 * (i >> 9) + 0x10) else {
+                    continue;
+                };
 
-            thread::sleep(Duration::from_millis(16));
+                let Ok(controller) = process.read::<usize>(entry + 120 * (i & 0x7FFF)) else {
+                    continue;
+                };
+
+                let Ok(pawn_handle) =
+                    process.read::<usize>(controller + client_dll::config::m_hPlayerPawn)
+                else {
+                    continue;
+                };
+
+                if let Ok(pawn_entry) =
+                    process.read::<usize>(entity_list + 0x8 * ((pawn_handle & 0x7FFF) >> 9) + 0x10)
+                {
+                    match process.read::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FFF)) {
+                        Ok(pawn) => {
+                            if let Ok(player_team) = player_team {
+                                let pawn_team =
+                                    process.read::<u8>(pawn + client_dll::config::m_iTeamNum)?;
+
+                                if pawn_team != player_team {
+                                    if process.read::<bool>(
+                                        pawn + client_dll::config::m_entitySpottedState
+                                            + client_dll::config::m_bSpotted,
+                                    )? {}
+                                }
+                            }
+                        }
+                        Err(_) => continue,
+                    }
+                };
+            }
         }
     }
 

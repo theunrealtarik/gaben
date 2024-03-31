@@ -102,13 +102,13 @@ impl Memory {
         })
     }
 
-    pub fn read<T>(&self, address: LPBYTE) -> Result<T, windows::core::Error> {
+    pub fn read<T>(&self, address: usize) -> Result<T, windows::core::Error> {
         let mut buffer: MaybeUninit<T> = MaybeUninit::uninit();
 
         match unsafe {
             ReadProcessMemory(
                 self.process_handle,
-                address.0 as LPCVOID,
+                address as LPCVOID,
                 buffer.as_mut_ptr() as LPVOID,
                 std::mem::size_of::<T>(),
                 None,
@@ -119,12 +119,12 @@ impl Memory {
         }
     }
 
-    pub fn write<T>(&self, address: LPBYTE, data: T) -> Result<usize, windows::core::Error> {
+    pub fn write<T>(&self, address: usize, data: T) -> Result<usize, windows::core::Error> {
         let mut bytes: usize = 0;
         match unsafe {
             WriteProcessMemory(
                 self.process_handle,
-                address.0 as LPCVOID,
+                address as LPCVOID,
                 &data as *const T as LPCVOID,
                 std::mem::size_of_val(&data),
                 Some(&mut bytes),
@@ -137,17 +137,19 @@ impl Memory {
 
     pub fn calculate_pointer(
         &self,
-        base_address: LPBYTE,
-        offsets: &[isize],
-    ) -> Result<LPBYTE, windows::core::Error> {
+        base_address: usize,
+        offsets: &[usize],
+    ) -> Result<usize, windows::core::Error> {
         let mut current_address = base_address;
 
         if offsets.is_empty() {
             Ok(current_address)
         } else {
-            for offset in offsets.iter() {
-                match self.read::<LPBYTE>(current_address) {
-                    Ok(addr) => current_address = unsafe { addr.offset(*offset) },
+            for &offset in offsets.iter() {
+                match self.read::<usize>(current_address) {
+                    Ok(addr) => {
+                        current_address = addr + offset;
+                    }
                     Err(err) => return Err(err),
                 }
             }
@@ -158,8 +160,8 @@ impl Memory {
 
     pub fn read_pointer<T>(
         &self,
-        address: LPBYTE,
-        offsets: Option<&[isize]>,
+        address: usize,
+        offsets: Option<&[usize]>,
     ) -> Result<T, windows::core::Error> {
         let offsets = match offsets {
             Some(o) => o,
@@ -188,7 +190,7 @@ impl Drop for Memory {
 pub struct Module {
     pub name: String,
     pub path: PathBuf,
-    pub address: LPBYTE,
+    pub address: usize,
     pub size: u32,
     pub id: u32,
     entry: MODULEENTRY32,
@@ -205,7 +207,7 @@ impl From<MODULEENTRY32> for Module {
                     .map(|&i| i as u8)
                     .collect::<Vec<u8>>(),
             )),
-            address: LPBYTE(entry.modBaseAddr),
+            address: entry.modBaseAddr as usize,
             size: entry.dwSize,
             id: entry.th32ModuleID,
             entry,
