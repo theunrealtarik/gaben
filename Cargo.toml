@@ -13,14 +13,14 @@ doc = false
 
 [dependencies]
 anyhow = "1.0.81"
-clearscreen = "2.0.1"
-delegate = "0.12.0"
 enigo = "0.1.3"
 inputbot = "0.6.0"
 strum = "0.26.2"
 strum_macros = "0.26.2"
 sysinfo = "0.30.7"
 winput = "0.2.5"
+ambassador = "0.3.6"
+derive-getters = "0.3.0"
 
 [dependencies.windows]
 version = "0.54.0"

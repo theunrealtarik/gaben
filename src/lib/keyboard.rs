@@ -1,4 +1,4 @@
-use delegate::delegate;
+use ambassador::{delegatable_trait_remote, Delegate};
 use enigo::{self, Enigo, Key, KeyboardControllable};
 use inputbot;
 
@@ -8,6 +8,16 @@ pub use inputbot::{MouseButton, MouseCursor, MouseWheel};
 pub type LisKey = inputbot::KeybdKey;
 pub type EmuKey = Key;
 
+#[delegatable_trait_remote]
+pub trait KeyboardControllable {
+    fn key_sequence(&mut self, sequence: &str);
+    fn key_down(&mut self, key: EmuKey);
+    fn key_up(&mut self, key: EmuKey);
+    fn key_click(&mut self, key: EmuKey);
+}
+
+#[derive(Delegate)]
+#[delegate(KeyboardControllable)]
 pub struct Keyboard {
     enigo: Enigo,
 }
@@ -23,11 +33,5 @@ impl Keyboard {
         std::thread::spawn(move || {
             inputbot::handle_input_events();
         });
-    }
-
-    delegate! {
-        to self.enigo {
-            pub fn key_click(&mut self, key: Key);
-        }
     }
 }

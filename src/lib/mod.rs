@@ -1,8 +1,8 @@
-mod keyboard;
-mod memory;
-mod time;
-mod types;
-mod utils;
+pub mod keyboard;
+pub mod memory;
+pub mod time;
+pub mod types;
+pub mod utils;
 
 #[allow(dead_code, unused_imports)]
 pub mod prelude {

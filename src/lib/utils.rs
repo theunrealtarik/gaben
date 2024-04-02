@@ -17,7 +17,3 @@ where
     )
     .unwrap_or_else(|_| String::new())
 }
-
-pub fn clear_screen() {
-    clearscreen::clear().unwrap();
-}

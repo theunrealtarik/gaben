@@ -25,20 +25,32 @@ pub mod client_dll {
     pub const dwViewMatrix: usize = 0x19241A0;
     pub const dwViewRender: usize = 0x1924A20;
 
-    pub mod config {
+    pub mod entity {
         pub const m_iHealth: usize = 0x334;
-        pub const m_pCameraServices: usize = 0x1138;
         pub const m_fFlags: usize = 0x3D4;
         pub const m_iFOV: usize = 0x210;
-        pub const m_hActiveWeapon: usize = 0x58;
-        pub const m_pClippingWeapon: usize = 0x1308;
         pub const m_hPlayerPawn: usize = 0x7E4;
-        pub const m_bIsScoped: usize = 0x1400;
         pub const m_iTeamNum: usize = 0x3CB;
+        pub const m_AttributeManager: usize = 0x1098;
+    }
+
+    pub mod pawn {
+        pub const m_pCameraServices: usize = 0x1138;
+        pub const m_pClippingWeapon: usize = 0x1308;
         pub const m_entitySpottedState: usize = 0x1698;
         pub const m_bSpotted: usize = 0x8;
         pub const m_iPawnHealth: usize = 0x7F0;
         pub const m_bPawnIsAlive: usize = 0x7EC;
+        pub const m_bIsScoped: usize = 0x1400;
+    }
+
+    pub mod weapon {
+        pub const m_hActiveWeapon: usize = 0x58;
+        pub const m_iItemDefinitionIndex: usize = 0x1BA;
+    }
+
+    pub mod attribute {
+        pub const m_Item: usize = 0x50;
     }
 }
 
@@ -58,8 +70,26 @@ pub mod matchmaking_dll {
     pub const dwGameTypes_mapName: usize = 0x1D2300;
 }
 
-pub mod types {
+#[allow(unused_imports)]
+pub mod prelude {
+    pub use super::client_dll;
+    pub use super::engine2_dll;
+    pub use super::matchmaking_dll;
+
+    use crate::lib::prelude::*;
+    use derive_getters::Getters;
     use strum_macros::Display;
+
+    #[derive(Getters)]
+    pub struct Player {
+        health: u32,
+        alive: bool,
+        spotted: bool,
+        flags: u32,
+        team: Team,
+        weapon: Weapon,
+        scopped: bool,
+    }
 
     pub enum PlayerState {
         Standing = 65665,
@@ -77,12 +107,51 @@ pub mod types {
         CounterStrike = 3,
     }
 
+    impl Player {
+        pub fn new(process: &Memory, local_player: usize) -> Option<Self> {
+            let Some(entity) = Entity::get_entity(process, local_player) else {
+                return None;
+            };
+
+            let Ok(flags) = process.read::<u32>(local_player + client_dll::entity::m_fFlags) else {
+                return None;
+            };
+
+            let scopped = process
+                .read::<bool>(local_player + client_dll::pawn::m_bIsScoped)
+                .unwrap_or_else(|_| false);
+
+            Some(Self {
+                health: entity.health,
+                alive: entity.alive,
+                spotted: entity.spotted,
+                team: entity.team,
+                weapon: entity.weapon,
+                flags,
+                scopped,
+            })
+        }
+
+        pub fn is_standing(&self) -> bool {
+            self.flags == PlayerState::Standing as u32
+        }
+
+        pub fn is_crouching(&self) -> bool {
+            self.flags == PlayerState::Crouching as u32
+        }
+
+        pub fn is_grounded(&self) -> bool {
+            self.flags & (1 << 0) != 0
+        }
+    }
+
+    #[derive(Getters)]
     pub struct Entity {
-        pub health: u32,
-        pub alive: bool,
-        pub spotted: bool,
-        pub team: Team,
-        pub weapon: Weapon,
+        health: u32,
+        alive: bool,
+        spotted: bool,
+        team: Team,
+        weapon: Weapon,
     }
 
     impl Entity {
@@ -98,6 +167,73 @@ pub mod types {
                 },
                 weapon: Weapon::from(weapon_id),
             }
+        }
+
+        pub fn get_entities<'a>(process: &'a Memory, client: &'a Module) -> Option<Vec<Entity>> {
+            let mut entities = Vec::new();
+
+            let Ok(entity_list) = process.read::<usize>(client.address + client_dll::dwEntityList)
+            else {
+                return None;
+            };
+
+            for i in 0..64 {
+                let Ok(entry) = process.read::<usize>(entity_list + 0x8 * (i >> 9) + 0x10) else {
+                    continue;
+                };
+
+                let Ok(controller) = process.read::<usize>(entry + 120 * (i & 0x7FFF)) else {
+                    continue;
+                };
+
+                let Ok(pawn_handle) =
+                    process.read::<usize>(controller + client_dll::entity::m_hPlayerPawn)
+                else {
+                    continue;
+                };
+
+                if let Ok(pawn_entry) =
+                    process.read::<usize>(entity_list + 0x8 * ((pawn_handle & 0x7FFF) >> 9) + 0x10)
+                {
+                    match process.read::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FFF)) {
+                        Ok(pawn) => {
+                            if let Some(entity) = Entity::get_entity(process, pawn) {
+                                entities.push(entity);
+                            };
+                        }
+                        Err(_) => continue,
+                    }
+                };
+            }
+
+            Some(entities)
+        }
+
+        pub fn get_entity(process: &Memory, pawn: usize) -> Option<Entity> {
+            let (Ok(health), Ok(is_alive), Ok(spotted), Ok(team_id)) = (
+                process.read::<u32>(pawn + client_dll::pawn::m_iPawnHealth),
+                process.read::<bool>(pawn + client_dll::pawn::m_bPawnIsAlive),
+                process.read::<bool>(
+                    pawn + client_dll::pawn::m_entitySpottedState + client_dll::pawn::m_bSpotted,
+                ),
+                process.read::<u8>(pawn + client_dll::entity::m_iTeamNum),
+            ) else {
+                return None;
+            };
+
+            let Ok(weapon_id) = process.read_pointer::<u8>(
+                pawn,
+                Some(&[
+                    client_dll::pawn::m_pClippingWeapon,
+                    client_dll::entity::m_AttributeManager
+                        + client_dll::weapon::m_iItemDefinitionIndex
+                        + client_dll::attribute::m_Item,
+                ]),
+            ) else {
+                return None;
+            };
+
+            Some(Entity::new(health, is_alive, spotted, team_id, weapon_id))
         }
     }
 
@@ -187,22 +323,15 @@ pub mod types {
                 40 => Self::SSG08,
                 61 => Self::USP,
                 63 => Self::CZ75,
-                9 => Self::Revolver,
+                69 => Self::Revolver,
                 _ => Self::Unknown,
             }
         }
     }
+
     impl Into<u8> for Weapon {
         fn into(self) -> u8 {
             self as u8
         }
     }
-}
-
-#[allow(unused_imports)]
-pub mod prelude {
-    pub use super::client_dll;
-    pub use super::engine2_dll;
-    pub use super::matchmaking_dll;
-    pub use super::types::*;
 }

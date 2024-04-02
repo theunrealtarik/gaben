@@ -73,42 +73,24 @@
       <Address>client.dll+0x1730530</Address>
     </CheatEntry>
     <CheatEntry>
-      <ID>11</ID>
-      <Description>"Weapons0"</Description>
-      <GroupHeader>1</GroupHeader>
-      <CheatEntries>
-        <CheatEntry>
-          <ID>10</ID>
-          <Description>"No description"</Description>
-          <ShowAsSigned>0</ShowAsSigned>
-          <VariableType>4 Bytes</VariableType>
-          <Address>7FFF965671A8+0x1308</Address>
-        </CheatEntry>
-        <CheatEntry>
-          <ID>12</ID>
-          <Description>"No description"</Description>
-          <ShowAsSigned>0</ShowAsSigned>
-          <VariableType>4 Bytes</VariableType>
-          <Address>7FFF965684B0+0xc18</Address>
-        </CheatEntry>
-        <CheatEntry>
-          <ID>13</ID>
-          <Description>"No description"</Description>
-          <ShowAsSigned>0</ShowAsSigned>
-          <VariableType>Array of byte</VariableType>
-          <ByteLength>32</ByteLength>
-          <Address>7FFF965690C8</Address>
-        </CheatEntry>
-      </CheatEntries>
+      <ID>14</ID>
+      <Description>"Weapon"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>4 Bytes</VariableType>
+      <Address>client.dll + 0x17371A8</Address>
+      <Offsets>
+        <Offset>0x1098+ 0x50 + 0x1BA</Offset>
+        <Offset>0x1308</Offset>
+      </Offsets>
     </CheatEntry>
     <CheatEntry>
-      <ID>14</ID>
+      <ID>15</ID>
       <Description>"No description"</Description>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x17371A8</Address>
       <Offsets>
-        <Offset>0x58</Offset>
+        <Offset>0x1698 + 0x8</Offset>
       </Offsets>
     </CheatEntry>
   </CheatEntries>
