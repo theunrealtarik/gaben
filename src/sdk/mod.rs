@@ -103,6 +103,7 @@ pub mod types {
 
     #[derive(Display, Clone, Copy)]
     pub enum Weapon {
+        // pistols
         USP = 61,
         Glock = 4,
         Tec9 = 30,
@@ -112,13 +113,14 @@ pub mod types {
         Elite = 2,
         Deagle = 1,
         CZ75 = 63,
+        // assult rfiles
         M4A4 = 16,
         M4A1S = 60,
         Galil = 13,
         Famas = 10,
         AUG = 8,
         AK47 = 7,
-
+        // smgs
         P90 = 19,
         PPBizon = 26,
         UMP45 = 24,
@@ -126,19 +128,20 @@ pub mod types {
         MP9 = 34,
         MP7 = 33,
         MAC10 = 17,
-
+        // rfiles
         SSG08 = 40,
         SCAR20 = 38,
         G38G1 = 11,
         AWP = 9,
-
+        // shotguns
         XM1014 = 25,
         Nova = 35,
         SawedOff = 29,
         Mag7 = 27,
-
+        // heavy assult rifles
         M249 = 14,
         Negev = 28,
+        Unknown = 0,
     }
 
     impl Weapon {
@@ -154,43 +157,41 @@ pub mod types {
     impl From<u8> for Weapon {
         fn from(value: u8) -> Self {
             match value {
-                61 => Weapon::USP,
-                4 => Weapon::Glock,
-                30 => Weapon::Tec9,
-                69 => Weapon::Revolver,
-                32 => Weapon::HKP2000,
-                3 => Weapon::FiveSeven,
-                2 => Weapon::Elite,
-                1 => Weapon::Deagle,
-                63 => Weapon::CZ75,
-                16 => Weapon::M4A4,
-                60 => Weapon::M4A1S,
-                13 => Weapon::Galil,
-                10 => Weapon::Famas,
-                8 => Weapon::AUG,
-                7 => Weapon::AK47,
-                19 => Weapon::P90,
-                26 => Weapon::PPBizon,
-                24 => Weapon::UMP45,
-                23 => Weapon::MP5,
-                34 => Weapon::MP9,
-                33 => Weapon::MP7,
-                17 => Weapon::MAC10,
-                40 => Weapon::SSG08,
-                38 => Weapon::SCAR20,
-                11 => Weapon::G38G1,
-                9 => Weapon::AWP,
-                25 => Weapon::XM1014,
-                35 => Weapon::Nova,
-                29 => Weapon::SawedOff,
-                27 => Weapon::Mag7,
-                14 => Weapon::M249,
-                28 => Weapon::Negev,
-                _ => panic!("Unknown weapon ID: {}", value),
+                1 => Self::Deagle,
+                2 => Self::Elite,
+                3 => Self::FiveSeven,
+                4 => Self::Glock,
+                7 => Self::AK47,
+                8 => Self::AUG,
+                9 => Self::AWP,
+                10 => Self::Famas,
+                11 => Self::G38G1,
+                13 => Self::Galil,
+                14 => Self::M249,
+                16 => Self::M4A4,
+                17 => Self::MAC10,
+                19 => Self::P90,
+                23 => Self::MP5,
+                24 => Self::UMP45,
+                25 => Self::XM1014,
+                26 => Self::PPBizon,
+                27 => Self::Mag7,
+                28 => Self::Negev,
+                29 => Self::SawedOff,
+                30 => Self::Tec9,
+                32 => Self::HKP2000,
+                33 => Self::MP7,
+                34 => Self::MP9,
+                35 => Self::Nova,
+                38 => Self::SCAR20,
+                40 => Self::SSG08,
+                61 => Self::USP,
+                63 => Self::CZ75,
+                9 => Self::Revolver,
+                _ => Self::Unknown,
             }
         }
     }
-
     impl Into<u8> for Weapon {
         fn into(self) -> u8 {
             self as u8
