@@ -11,7 +11,7 @@ use std::time::Duration;
 
 #[cfg(target_os = "windows")]
 fn main() -> Result<(), anyhow::Error> {
-    use enigo::KeyboardControllable;
+    use crate::sdk::offsets;
 
     let mut keyboard = Keyboard::new();
     keyboard.listen();
@@ -25,8 +25,7 @@ fn main() -> Result<(), anyhow::Error> {
         let client = process.modules.get("client.dll").unwrap();
 
         loop {
-            let Ok(local_player) =
-                process.read::<usize>(client.address + client_dll::dwLocalPlayerPawn)
+            let Ok(local_player) = process.read::<usize>(client.address + offsets::DW_LOCAL_PAWN)
             else {
                 continue;
             };
@@ -35,7 +34,7 @@ fn main() -> Result<(), anyhow::Error> {
                 continue;
             };
 
-            let force_jump = client.address + client_dll::dwForceJump;
+            let force_jump = client.address + offsets::buttons::jump;
             if bunny_man.elapsed(Duration::from_millis(70)) {
                 if player.is_grounded() {
                     process.write::<i32>(force_jump, Modifier::Plus as i32)?;
@@ -49,8 +48,14 @@ fn main() -> Result<(), anyhow::Error> {
             };
 
             for entity in entities {
-                if *entity.spotted() && keys_timer.elapsed(Duration::from_millis(500)) {
+                if *entity.spotted()
+                    && keys_timer.elapsed(Duration::from_millis(500))
+                    && MouseButton::LeftButton.is_pressed()
+                    && rand::random::<bool>()
+                    && (!player.weapon().is_throwable())
+                {
                     keyboard.key_click(EmuKey::G);
+                    println!("{:?}", entity.weapon());
                 }
             }
 

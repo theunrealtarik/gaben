@@ -21,6 +21,7 @@ sysinfo = "0.30.7"
 winput = "0.2.5"
 ambassador = "0.3.6"
 derive-getters = "0.3.0"
+rand = "0.8.5"
 
 [dependencies.windows]
 version = "0.54.0"

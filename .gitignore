@@ -1,3 +1,5 @@
 /target
-/generated
 .vscode
+src/sdk/offsets/generated/*.rs
+!src/sdk/offsets/generated/mod.rs
+external/output/

@@ -1,6 +1,8 @@
 use ambassador::{delegatable_trait_remote, Delegate};
-use enigo::{self, Enigo, Key, KeyboardControllable};
+use enigo::{self, Enigo, Key};
 use inputbot;
+
+pub use enigo::KeyboardControllable;
 
 #[allow(unused_imports)]
 pub use inputbot::{MouseButton, MouseCursor, MouseWheel};
