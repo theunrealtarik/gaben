@@ -6,11 +6,12 @@ import re
 current_dir = os.getcwd()
 dumper_path = os.path.join(current_dir, "external", "cs2-dumper.exe")
 
-# subprocess.run([dumper_path, "-o", "./src/generated/"])
+directory_path = os.path.join(
+    current_dir, "src", "sdk", "offsets", "generated")
+module_path = os.path.join(directory_path, "mod.rs")
 
-directory_path = os.path.join(current_dir, "src", "generated", "offsets")
-module_path = os.path.join(
-    current_dir, "src", "generated", "offsets", "mod.rs")
+subprocess.run([dumper_path, "-o", directory_path])
+
 module_content = ""
 
 if not os.path.exists(directory_path):
