@@ -1,0 +1,26 @@
+[package]
+name = "sdk"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+inputbot = "0.6.0"
+strum = "0.26.2"
+strum_macros = "0.26.2"
+sysinfo = "0.30.7"
+ambassador = "0.3.6"
+derive-getters = "0.3.0"
+rand = "0.8.5"
+
+[dependencies.windows]
+version = "0.56.0"
+features = [
+	"Win32_Foundation",
+	"Win32_System",
+	"Win32_UI_Input_KeyboardAndMouse",
+	"Win32_System_Diagnostics_Debug",
+	"Win32_System_Diagnostics_ToolHelp",
+	"Win32_System_ProcessStatus",
+	"Win32_System_Threading"
+]

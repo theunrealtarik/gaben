@@ -48,8 +48,13 @@ mod utils {
 
 #[cfg(test)]
 mod time {
-    use lib::prelude::Timer;
-    use std::time::Duration;
+    use lib::{prelude::Timer, time::Timers};
+    use std::{collections::HashMap, time::Duration};
+
+    #[derive(Hash, PartialEq, Eq)]
+    enum Tags {
+        One,
+    }
 
     #[test]
     #[allow(unused_assignments)]

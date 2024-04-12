@@ -1,0 +1,10 @@
+[package]
+name = "gaben"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.81"
+rand = "0.8.5"
+sdk = { path = "../sdk" }
+# macros = { path = "../macros" }
