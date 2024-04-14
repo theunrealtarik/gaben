@@ -3,26 +3,76 @@ mod punishments;
 use punishments::*;
 use sdk::prelude::*;
 
+use rand::Rng;
+use std::sync::mpsc;
+use std::sync::Arc;
+use std::thread;
+
 #[cfg(target_os = "windows")]
 fn main() -> Result<(), anyhow::Error> {
+    use std::time::Duration;
+
     Keyboard::listen();
 
     if let Ok(process) = Memory::new(CS_PROCESS_NAME) {
+        let process = Arc::new(process);
+
+        let (ptx, prx) = mpsc::channel::<Arc<Player>>();
+        let (etx, erx) = mpsc::channel::<Arc<Vec<Entity>>>();
+        // {
+        //     let process = Arc::clone(&process);
+        //     thread::spawn(move || {
+        //         let modules = &process.modules;
+        //         let mut rng = rand::thread_rng();
+        //         let mut timer = Timer::default();
+        //         let mut periodic = Punishments::new();
+        //
+        //         periodic.add(Box::new(BunnyMan::new()));
+        //
+        //         loop {
+        //             let player = prx.recv().ok();
+        //             let entities = erx.recv().ok();
+        //
+        //             if timer.elapsed(Duration::from_secs(60 * 2)) {
+        //                 if timer.elapsed(Duration::from_secs(rng.gen_range(15..=30))) {
+        //                     periodic
+        //                         .next()
+        //                         .action(modules, player.as_deref(), entities.as_deref());
+        //                 }
+        //             }
+        //         }
+        //     });
+        // }
+
         let client = process.modules.get("client.dll").unwrap();
+        let mut continuous = Punishments::new();
 
-        loop {
-            let Ok(local_player) = process.read::<usize>(client.address + offsets::DW_LOCAL_PAWN)
-            else {
-                continue;
-            };
+        // continuous.add(Box::new(SlippyWippyWeapon::new()));
+        // continuous.add(Box::new(CursedSnipers::new()));
 
-            let (Some(player), Some(entities)) = (
-                Player::new(&process, local_player),
-                Entity::get_entities(&process, client),
-            ) else {
-                continue;
-            };
-        }
+        // continuous.add(Box::new(ExamplePunishment {
+        //     schedule: PunishmentSchedule::Continuous,
+        // }));
+
+        continuous.add(Box::new(ExamplePunishment::new()));
+        loop {}
+
+        // loop {
+        //     let Ok(local_player) = process.read::<usize>(client.address + offsets::DW_LOCAL_PAWN)
+        //     else {
+        //         continue;
+        //     };
+        //
+        //     let Some(player) = Player::new(&process, local_player) else {
+        //         continue;
+        //     };
+        //     ptx.send(Arc::new(player)).unwrap();
+        //
+        //     let Some(entities) = Entity::get_entities(&process, client) else {
+        //         continue;
+        //     };
+        //     etx.send(Arc::new(entities)).unwrap();
+        // }
     }
 
     Ok(())

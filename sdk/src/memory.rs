@@ -186,14 +186,13 @@ impl Drop for Memory {
 }
 
 #[allow(dead_code)]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Module {
     pub name: String,
     pub path: PathBuf,
     pub address: usize,
     pub size: u32,
     pub id: u32,
-    entry: MODULEENTRY32,
 }
 
 impl From<MODULEENTRY32> for Module {
@@ -210,19 +209,6 @@ impl From<MODULEENTRY32> for Module {
             address: entry.modBaseAddr as usize,
             size: entry.dwSize,
             id: entry.th32ModuleID,
-            entry,
         }
-    }
-}
-
-impl std::fmt::Debug for Module {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Module")
-            .field("name", &self.name)
-            .field("path", &self.path)
-            .field("address", &self.address)
-            .field("size", &self.size)
-            .field("id", &self.id)
-            .finish()
     }
 }

@@ -125,6 +125,7 @@ name = "gaben"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "macros",
  "rand",
  "sdk",
 ]

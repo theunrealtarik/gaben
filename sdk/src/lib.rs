@@ -26,56 +26,46 @@ pub mod punishments {
     use super::memory::*;
     use std::collections::HashMap;
 
-    #[derive(Default)]
+    #[derive(Default, Copy, Clone)]
     pub enum PunishmentSchedule {
         Periodic,
         #[default]
-        Continous,
+        Continuous,
     }
 
-    pub trait Punishment {
+    pub trait Punishment: Send + Sync {
         fn schedule(&self) -> &PunishmentSchedule;
         fn action(
-            &mut self,
+            &self,
             modules: &HashMap<String, Module>,
             player: Option<&Player>,
             entities: Option<&Vec<Entity>>,
         );
     }
 
-    pub struct Punishments<T>
-    where
-        T: Punishment,
-    {
-        periodic: Vec<T>,
-        continuous: Vec<T>,
+    pub struct Punishments {
+        values: Vec<Box<dyn Punishment>>,
+        index: usize,
     }
 
-    impl<T> Punishments<T>
-    where
-        T: Punishment,
-    {
+    impl Punishments {
         pub fn new() -> Self {
             Self {
-                periodic: Vec::new(),
-                continuous: Vec::new(),
+                values: Vec::new(),
+                index: 0,
             }
         }
 
-        pub fn add(mut self, punishment: T) -> Self {
-            match punishment.schedule() {
-                PunishmentSchedule::Periodic => self.periodic.push(punishment),
-                PunishmentSchedule::Continous => self.continuous.push(punishment),
-            }
-            self
+        pub fn add(&mut self, p: Box<dyn Punishment>) {
+            self.values.push(p);
         }
 
-        pub fn run(
-            mut self,
-            modules: &HashMap<String, Module>,
-            player: Option<&Player>,
-            entities: Option<&Vec<Entity>>,
-        ) {
+        pub fn next(&mut self) -> &Box<dyn Punishment> {
+            let value = self.values.get(self.index);
+            self.index = (self.index + 1) % self.values.len();
+
+            let value = value.clone().unwrap();
+            value
         }
     }
 }

@@ -1,15 +1,34 @@
+#![allow(dead_code)]
+
 use std::collections::HashMap;
+use std::sync::Mutex;
 use std::time::Duration;
 
+use macros::{ContinuousPunishment, PeriodicPunishment};
 use sdk::game::*;
 use sdk::inputs::*;
 use sdk::memory::*;
-use sdk::punishments::*;
+pub use sdk::punishments::*;
 use sdk::time::*;
 
-#[derive(Default)]
-struct SlippyWippyWeapon {
-    timer: Timer,
+#[derive(ContinuousPunishment)]
+pub struct ExamplePunishment {
+    pub schedule: PunishmentSchedule,
+}
+
+impl Punishment for ExamplePunishment {
+    fn schedule(&self) -> &PunishmentSchedule {
+        &self.schedule
+    }
+
+    fn action(&self, _: &HashMap<String, Module>, _: Option<&Player>, _: Option<&Vec<Entity>>) {
+        print!("damn");
+    }
+}
+
+#[derive(ContinuousPunishment)]
+pub struct SlippyWippyWeapon {
+    timer: Mutex<Timer>,
     schedule: PunishmentSchedule,
 }
 
@@ -19,15 +38,16 @@ impl Punishment for SlippyWippyWeapon {
     }
 
     fn action(
-        &mut self,
+        &self,
         _: &HashMap<String, Module>,
         player: Option<&Player>,
         entities: Option<&Vec<Entity>>,
     ) {
         if let (Some(entities), Some(player)) = (entities, player) {
+            let mut timer = self.timer.lock().unwrap();
             for entity in entities {
                 if *entity.spotted()
-                    && self.timer.elapsed(Duration::from_millis(500))
+                    && timer.elapsed(Duration::from_millis(500))
                     && MouseButton::LeftButton.is_pressed()
                     && rand::random::<bool>()
                     && (!player.weapon().is_throwable())
@@ -39,8 +59,8 @@ impl Punishment for SlippyWippyWeapon {
     }
 }
 
-#[derive(Default)]
-struct CursedSnipers {
+#[derive(ContinuousPunishment)]
+pub struct CursedSnipers {
     schedule: PunishmentSchedule,
 }
 
@@ -50,7 +70,7 @@ impl Punishment for CursedSnipers {
     }
 
     fn action(
-        &mut self,
+        &self,
         _: &HashMap<String, Module>,
         player: Option<&Player>,
         _: Option<&Vec<Entity>>,
@@ -68,18 +88,10 @@ impl Punishment for CursedSnipers {
     }
 }
 
+#[derive(PeriodicPunishment)]
 pub struct BunnyMan {
     schedule: PunishmentSchedule,
-    timer: Timer,
-}
-
-impl Default for BunnyMan {
-    fn default() -> Self {
-        Self {
-            schedule: PunishmentSchedule::Periodic,
-            timer: Timer::default(),
-        }
-    }
+    timer: Mutex<Timer>,
 }
 
 impl Punishment for BunnyMan {
@@ -88,10 +100,10 @@ impl Punishment for BunnyMan {
     }
 
     fn action(
-        &mut self,
+        &self,
         modules: &HashMap<String, Module>,
         player: Option<&Player>,
-        entities: Option<&Vec<Entity>>,
+        _: Option<&Vec<Entity>>,
     ) {
         let client = modules.get("client.dll").unwrap();
         let force_jump = client.address + offsets::buttons::jump;
@@ -100,7 +112,8 @@ impl Punishment for BunnyMan {
             return;
         };
 
-        if self.timer.elapsed(Duration::from_millis(80)) {
+        let mut timer = self.timer.lock().unwrap();
+        if timer.elapsed(Duration::from_millis(80)) {
             if player.is_grounded() {
                 // process.write::<i32>(force_jump, Modifier::Plus as i32)?;
             } else {
