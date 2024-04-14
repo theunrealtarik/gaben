@@ -6,7 +6,7 @@ use strum_macros::{Display, FromRepr};
 
 pub use super::offsets;
 
-#[derive(Getters)]
+#[derive(Getters, Clone, Copy)]
 pub struct Player {
     health: u32,
     alive: bool,
@@ -28,7 +28,7 @@ pub enum Modifier {
     Minus = 256,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Team {
     Unknown,
     Terrorist = 2,
@@ -74,7 +74,7 @@ impl Player {
     }
 }
 
-#[derive(Getters)]
+#[derive(Getters, Clone, Copy)]
 pub struct Entity {
     health: u32,
     alive: bool,

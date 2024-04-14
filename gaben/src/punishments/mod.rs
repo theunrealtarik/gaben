@@ -11,22 +11,7 @@ use sdk::memory::*;
 pub use sdk::punishments::*;
 use sdk::time::*;
 
-#[derive(ContinuousPunishment)]
-pub struct ExamplePunishment {
-    pub schedule: PunishmentSchedule,
-}
-
-impl Punishment for ExamplePunishment {
-    fn schedule(&self) -> &PunishmentSchedule {
-        &self.schedule
-    }
-
-    fn action(&self, _: &HashMap<String, Module>, _: Option<&Player>, _: Option<&Vec<Entity>>) {
-        print!("damn");
-    }
-}
-
-#[derive(ContinuousPunishment)]
+#[derive(ContinuousPunishment, Default)]
 pub struct SlippyWippyWeapon {
     timer: Mutex<Timer>,
     schedule: PunishmentSchedule,
@@ -37,12 +22,7 @@ impl Punishment for SlippyWippyWeapon {
         &self.schedule
     }
 
-    fn action(
-        &self,
-        _: &HashMap<String, Module>,
-        player: Option<&Player>,
-        entities: Option<&Vec<Entity>>,
-    ) {
+    fn action(&self, process: &Memory, player: Option<&Player>, entities: Option<&Vec<Entity>>) {
         if let (Some(entities), Some(player)) = (entities, player) {
             let mut timer = self.timer.lock().unwrap();
             for entity in entities {
@@ -59,7 +39,7 @@ impl Punishment for SlippyWippyWeapon {
     }
 }
 
-#[derive(ContinuousPunishment)]
+#[derive(ContinuousPunishment, Default)]
 pub struct CursedSnipers {
     schedule: PunishmentSchedule,
 }
@@ -69,12 +49,7 @@ impl Punishment for CursedSnipers {
         &self.schedule
     }
 
-    fn action(
-        &self,
-        _: &HashMap<String, Module>,
-        player: Option<&Player>,
-        _: Option<&Vec<Entity>>,
-    ) {
+    fn action(&self, _: &Memory, player: Option<&Player>, _: Option<&Vec<Entity>>) {
         if let Some(player) = player {
             match *player.weapon() {
                 Weapon::AWP | Weapon::SSG08 => {
@@ -88,7 +63,7 @@ impl Punishment for CursedSnipers {
     }
 }
 
-#[derive(PeriodicPunishment)]
+#[derive(PeriodicPunishment, Default)]
 pub struct BunnyMan {
     schedule: PunishmentSchedule,
     timer: Mutex<Timer>,
@@ -99,13 +74,8 @@ impl Punishment for BunnyMan {
         &self.schedule
     }
 
-    fn action(
-        &self,
-        modules: &HashMap<String, Module>,
-        player: Option<&Player>,
-        _: Option<&Vec<Entity>>,
-    ) {
-        let client = modules.get("client.dll").unwrap();
+    fn action(&self, process: &Memory, player: Option<&Player>, _: Option<&Vec<Entity>>) {
+        let client = process.modules.get("client.dll").unwrap();
         let force_jump = client.address + offsets::buttons::jump;
 
         let Some(player) = player else {
@@ -115,9 +85,13 @@ impl Punishment for BunnyMan {
         let mut timer = self.timer.lock().unwrap();
         if timer.elapsed(Duration::from_millis(80)) {
             if player.is_grounded() {
-                // process.write::<i32>(force_jump, Modifier::Plus as i32)?;
+                process
+                    .write::<i32>(force_jump, Modifier::Plus as i32)
+                    .unwrap();
             } else {
-                // process.write::<i32>(force_jump, Modifier::Minus as i32)?;
+                process
+                    .write::<i32>(force_jump, Modifier::Minus as i32)
+                    .unwrap();
             }
         }
     }

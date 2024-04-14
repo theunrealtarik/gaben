@@ -22,9 +22,10 @@ pub mod prelude {
 }
 
 pub mod punishments {
+    use derive_getters::Getters;
+
     use super::game::*;
     use super::memory::*;
-    use std::collections::HashMap;
 
     #[derive(Default, Copy, Clone)]
     pub enum PunishmentSchedule {
@@ -35,14 +36,10 @@ pub mod punishments {
 
     pub trait Punishment: Send + Sync {
         fn schedule(&self) -> &PunishmentSchedule;
-        fn action(
-            &self,
-            modules: &HashMap<String, Module>,
-            player: Option<&Player>,
-            entities: Option<&Vec<Entity>>,
-        );
+        fn action(&self, process: &Memory, player: Option<&Player>, entities: Option<&Vec<Entity>>);
     }
 
+    #[derive(Getters)]
     pub struct Punishments {
         values: Vec<Box<dyn Punishment>>,
         index: usize,
