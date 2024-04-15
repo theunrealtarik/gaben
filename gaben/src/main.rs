@@ -21,7 +21,6 @@ fn main() -> Result<(), anyhow::Error> {
         {
             let process = Arc::clone(&process);
             thread::spawn(move || {
-                let modules = &process.modules;
                 let mut rng = rand::thread_rng();
                 let mut periodic = Punishments::new();
 

@@ -23,15 +23,19 @@ impl Punishment for SlipperyWeapons {
     fn action(&self, _: &Memory, player: &Option<Player>, entities: &Option<Vec<Entity>>) {
         if let (Some(entities), Some(player)) = (entities, player) {
             let mut timer = self.timer.lock().unwrap();
-            for entity in entities {
-                if *entity.spotted()
-                    && timer.elapsed(Duration::from_millis(500))
-                    && MouseButton::LeftButton.is_pressed()
-                    && rand::random::<bool>()
-                    && (!player.weapon().is_throwable())
-                {
-                    Keyboard::stroke(Key::GKey);
-                }
+            let spotted_entities = entities
+                .into_iter()
+                .filter(|entity| *entity.spotted())
+                .collect::<Vec<_>>()
+                .len();
+
+            if spotted_entities > 0
+                && timer.elapsed(Duration::from_millis(500))
+                && MouseButton::LeftButton.is_pressed()
+                && rand::random::<bool>()
+                && (!player.weapon().is_throwable())
+            {
+                Keyboard::stroke(Key::GKey);
             }
         }
     }

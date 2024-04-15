@@ -44,8 +44,7 @@ pub struct Player {
     weapon: Weapon,
     is_alive: bool,
     is_scopped: bool,
-    entity_id: Option<i32>,
-    // cross_entity: Option<Entity>,
+    entity_index: Option<i32>,
     base_address: usize,
 }
 
@@ -65,7 +64,7 @@ impl Player {
             return None;
         };
 
-        let entity_id = match process
+        let entity_index = match process
             .read::<i32>(local_player + C_CSPlayerPawnBase::m_iIDEntIndex)
             .ok()
         {
@@ -79,33 +78,7 @@ impl Player {
             None => None,
         };
 
-        // let cross_entity = {
-        //     let entity_index = process
-        //         .read::<i32>(local_player + offsets::C_CSPlayerPawnBase::m_iIDEntIndex)
-        //         .unwrap_or_else(|_| -1);
-        //
-        //     if entity_index < 0 {
-        //         return None;
-        //     }
-        //
-        //     let Ok(entity_list) = process.read::<usize>(client.address + DW_ENTITY_LIST) else {
-        //         return None;
-        //     };
-        //
-        //     let Ok(entry) =
-        //         process.read::<usize>(entity_list + 0x8 * (entity_index as usize >> 9) + 0x10)
-        //     else {
-        //         return None;
-        //     };
-        //
-        //     let Ok(pawn) = process.read::<usize>(entry + 0x78 * (entity_index as usize & 0x1FF))
-        //     else {
-        //         return None;
-        //     };
-        // };
-
-        let Ok(health) = process.read::<u32>(local_controller + CCSPlayerController::m_iPawnHealth)
-        else {
+        let Ok(health) = process.read::<u32>(local_player + C_BaseEntity::m_iHealth) else {
             return None;
         };
 
@@ -135,8 +108,7 @@ impl Player {
             weapon: Weapon::from(weapon_id),
             flags,
             is_scopped,
-            entity_id,
-            // cross_entity,
+            entity_index,
             base_address: local_player,
         })
     }
@@ -177,7 +149,7 @@ impl Entity {
                 continue;
             };
 
-            let Ok(controller) = process.read::<usize>(entry + 120 * (i & 0x7FFF)) else {
+            let Ok(controller) = process.read::<usize>(entry + 120 * (i & 0x1FF)) else {
                 continue;
             };
 
@@ -190,8 +162,11 @@ impl Entity {
             if let Ok(pawn_entry) =
                 process.read::<usize>(entity_list + 0x8 * ((pawn_handle & 0x7FFF) >> 9) + 0x10)
             {
-                match process.read::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FFF)) {
+                match process.read::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FF)) {
                     Ok(pawn) => {
+                        // let Ok(health) = process.read::<u32>(pawn + C_BaseEntity::m_iHealth) else {
+                        //     return None;
+                        // };
                         let Ok(health) =
                             process.read::<u32>(controller + CCSPlayerController::m_iPawnHealth)
                         else {
@@ -211,21 +186,19 @@ impl Entity {
                             return None;
                         };
 
-                        println!("{}", spotted);
-
                         let Ok(team_id) = process.read::<u8>(pawn + C_BaseEntity::m_iTeamNum)
                         else {
                             return None;
                         };
 
-                        let Ok(weapon_id) = process.read_pointer::<u8>(
-                            pawn + C_CSPlayerPawnBase::m_pClippingWeapon,
-                            Some(&[C_EconEntity::m_AttributeManager
-                                + C_EconItemView::m_iItemDefinitionIndex
-                                + C_AttributeContainer::m_Item]),
-                        ) else {
-                            return None;
-                        };
+                        let weapon_id = process
+                            .read_pointer::<u8>(
+                                pawn + C_CSPlayerPawnBase::m_pClippingWeapon,
+                                Some(&[C_EconEntity::m_AttributeManager
+                                    + C_EconItemView::m_iItemDefinitionIndex
+                                    + C_AttributeContainer::m_Item]),
+                            )
+                            .unwrap_or_else(|_| 0);
 
                         // println!("{}", weapon_id);
                         let entity = EntityBuilder::default()
@@ -234,6 +207,7 @@ impl Entity {
                             .spotted(spotted)
                             .team(Team::from(team_id))
                             .weapon(Weapon::from(weapon_id))
+                            .base_address(pawn)
                             .build()
                             .unwrap();
 
