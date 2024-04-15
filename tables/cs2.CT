@@ -4,7 +4,7 @@
     <CheatEntry>
       <ID>0</ID>
       <Description>"controlleer"</Description>
-      <LastState Value="3790287360" RealAddress="7FF9F4B41578"/>
+      <LastState Value="0" RealAddress="7FF9F4B41578"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x1911578</Address>
@@ -12,7 +12,6 @@
     <CheatEntry>
       <ID>1</ID>
       <Description>"health"</Description>
-      <LastState Value="100" RealAddress="1BAE1EB39F0"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x1911578</Address>
@@ -23,7 +22,6 @@
     <CheatEntry>
       <ID>2</ID>
       <Description>"is alive"</Description>
-      <LastState Value="1" RealAddress="1BAE1EB39EC"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x1911578</Address>
@@ -34,7 +32,6 @@
     <CheatEntry>
       <ID>3</ID>
       <Description>"team"</Description>
-      <LastState Value="3" RealAddress="1BAE1EB35CB"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x1911578</Address>
@@ -45,11 +42,12 @@
     <CheatEntry>
       <ID>14</ID>
       <Description>"weapon"</Description>
+      <LastState Value="7" RealAddress="1B9488D4AA2"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
-      <Address>client.dll + 0x17371A8</Address>
+      <Address>client.dll + 0x17361E8</Address>
       <Offsets>
-        <Offset>0x1098+ 0x50 + 0x1BA</Offset>
+        <Offset>0x1098+0x1BA+0x50</Offset>
         <Offset>0x1308</Offset>
       </Offsets>
     </CheatEntry>
