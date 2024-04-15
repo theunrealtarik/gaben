@@ -4,18 +4,18 @@ import os
 import re
 
 current_dir = os.getcwd()
-dumper_path = os.path.join(current_dir, "external", "cs2-dumper.exe")
+dumper_path = os.path.join(current_dir, "sdk", "external", "cs2-dumper.exe")
 
 directory_path = os.path.join(
-    current_dir, "src", "sdk", "offsets", "generated")
+    current_dir, "sdk", "src", "offsets", "generated")
 module_path = os.path.join(directory_path, "mod.rs")
-
-subprocess.run([dumper_path, "-o", directory_path])
 
 module_content = ""
 
 if not os.path.exists(directory_path):
     os.makedirs(directory_path)
+
+subprocess.run([dumper_path, "-o", directory_path])
 
 if not os.path.exists(module_path):
     with open(module_path, "w"):

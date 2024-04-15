@@ -15,7 +15,7 @@ pub mod prelude {
     pub use super::inputs::*;
     pub use super::memory::*;
     pub use super::offsets;
-    pub use super::punishments;
+    pub use super::punishments::*;
     pub use super::time::*;
     pub use super::types::*;
     pub use super::utils::*;
@@ -36,7 +36,8 @@ pub mod punishments {
 
     pub trait Punishment: Send + Sync {
         fn schedule(&self) -> &PunishmentSchedule;
-        fn action(&self, process: &Memory, player: Option<&Player>, entities: Option<&Vec<Entity>>);
+        fn name(&self) -> &String;
+        fn action(&self, process: &Memory, player: &Option<Player>, entities: &Option<Vec<Entity>>);
     }
 
     #[derive(Getters)]

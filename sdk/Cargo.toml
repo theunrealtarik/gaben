@@ -10,7 +10,8 @@ strum = "0.26.2"
 strum_macros = "0.26.2"
 sysinfo = "0.30.7"
 ambassador = "0.3.6"
-derive-getters = "0.3.0"
+derive-getters = { workspace = true }
+derive_builder = "0.20.0"
 rand = "0.8.5"
 
 [dependencies.windows]

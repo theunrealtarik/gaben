@@ -1,22 +1,11 @@
 use super::memory::*;
 use super::offsets::*;
 
+use derive_builder::Builder;
 use derive_getters::Getters;
 use strum_macros::{Display, FromRepr};
 
 pub use super::offsets;
-
-#[derive(Getters, Clone, Copy)]
-pub struct Player {
-    health: u32,
-    alive: bool,
-    spotted: bool,
-    flags: u32,
-    team: Team,
-    weapon: Weapon,
-    scopped: bool,
-    base_address: usize,
-}
 
 pub enum PlayerState {
     Standing = 65665,
@@ -28,35 +17,126 @@ pub enum Modifier {
     Minus = 256,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum Team {
+    #[default]
     Unknown,
     Terrorist = 2,
     CounterStrike = 3,
 }
 
+impl From<u8> for Team {
+    fn from(value: u8) -> Self {
+        match value {
+            2 => Self::Terrorist,
+            3 => Self::CounterStrike,
+            _ => Self::Unknown,
+        }
+    }
+}
+
+#[derive(Default, Getters, Clone, Copy)]
+pub struct Player {
+    health: u32,
+    #[getter(rename = "is_spotted")]
+    flags: u32,
+    team: Team,
+    weapon: Weapon,
+    is_alive: bool,
+    is_scopped: bool,
+    entity_id: Option<i32>,
+    // cross_entity: Option<Entity>,
+    base_address: usize,
+}
+
 impl Player {
-    pub fn new(process: &Memory, local_player: usize) -> Option<Self> {
-        let Some(entity) = Entity::get_entity(process, local_player) else {
+    pub fn read(process: &Memory, local_player: usize) -> Option<Self> {
+        let client = process.modules.get("client.dll").unwrap();
+        let Ok(local_controller) = process.read::<usize>(client.address + DW_LOCAL_PAWN_CONTROLLER)
+        else {
             return None;
         };
+
+        let is_scopped = process
+            .read::<bool>(local_player + C_CSPlayerPawnBase::m_bIsScoped)
+            .unwrap_or_else(|_| false);
 
         let Ok(flags) = process.read::<u32>(local_player + C_BaseEntity::m_fFlags) else {
             return None;
         };
 
-        let scopped = process
-            .read::<bool>(local_player + C_CSPlayerPawnBase::m_bIsScoped)
-            .unwrap_or_else(|_| false);
+        let entity_id = match process
+            .read::<i32>(local_player + C_CSPlayerPawnBase::m_iIDEntIndex)
+            .ok()
+        {
+            Some(id) => {
+                if id > 0 {
+                    Some(id)
+                } else {
+                    None
+                }
+            }
+            None => None,
+        };
+
+        // let cross_entity = {
+        //     let entity_index = process
+        //         .read::<i32>(local_player + offsets::C_CSPlayerPawnBase::m_iIDEntIndex)
+        //         .unwrap_or_else(|_| -1);
+        //
+        //     if entity_index < 0 {
+        //         return None;
+        //     }
+        //
+        //     let Ok(entity_list) = process.read::<usize>(client.address + DW_ENTITY_LIST) else {
+        //         return None;
+        //     };
+        //
+        //     let Ok(entry) =
+        //         process.read::<usize>(entity_list + 0x8 * (entity_index as usize >> 9) + 0x10)
+        //     else {
+        //         return None;
+        //     };
+        //
+        //     let Ok(pawn) = process.read::<usize>(entry + 0x78 * (entity_index as usize & 0x1FF))
+        //     else {
+        //         return None;
+        //     };
+        // };
+
+        let Ok(health) = process.read::<u32>(local_controller + CCSPlayerController::m_iPawnHealth)
+        else {
+            return None;
+        };
+
+        let Ok(is_alive) =
+            process.read::<bool>(local_controller + CCSPlayerController::m_bPawnIsAlive)
+        else {
+            return None;
+        };
+
+        let Ok(team_id) = process.read::<u8>(local_player + C_BaseEntity::m_iTeamNum) else {
+            return None;
+        };
+
+        let Ok(weapon_id) = process.read_pointer::<u8>(
+            local_player + C_CSPlayerPawnBase::m_pClippingWeapon,
+            Some(&[C_EconEntity::m_AttributeManager
+                + C_EconItemView::m_iItemDefinitionIndex
+                + C_AttributeContainer::m_Item]),
+        ) else {
+            return None;
+        };
 
         Some(Self {
-            health: entity.health,
-            alive: entity.alive,
-            spotted: entity.spotted,
-            team: entity.team,
-            weapon: entity.weapon,
+            health,
+            is_alive,
+            team: Team::from(team_id),
+            weapon: Weapon::from(weapon_id),
             flags,
-            scopped,
+            is_scopped,
+            entity_id,
+            // cross_entity,
             base_address: local_player,
         })
     }
@@ -74,7 +154,7 @@ impl Player {
     }
 }
 
-#[derive(Getters, Clone, Copy)]
+#[derive(Getters, Builder, Clone, Copy, Debug)]
 pub struct Entity {
     health: u32,
     alive: bool,
@@ -85,29 +165,7 @@ pub struct Entity {
 }
 
 impl Entity {
-    pub fn new(
-        health: u32,
-        alive: bool,
-        spotted: bool,
-        team_num: u8,
-        weapon_id: u8,
-        base_address: usize,
-    ) -> Self {
-        Self {
-            health,
-            alive,
-            spotted,
-            team: match team_num {
-                2 => Team::Terrorist,
-                3 => Team::CounterStrike,
-                _ => Team::Unknown,
-            },
-            weapon: Weapon::from(weapon_id),
-            base_address,
-        }
-    }
-
-    pub fn get_entities<'a>(process: &'a Memory, client: &'a Module) -> Option<Vec<Entity>> {
+    pub fn read_entities<'a>(process: &'a Memory, client: &'a Module) -> Option<Vec<Entity>> {
         let mut entities = Vec::new();
 
         let Ok(entity_list) = process.read::<usize>(client.address + DW_ENTITY_LIST) else {
@@ -134,9 +192,52 @@ impl Entity {
             {
                 match process.read::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FFF)) {
                     Ok(pawn) => {
-                        if let Some(entity) = Entity::get_entity(process, pawn) {
-                            entities.push(entity);
+                        let Ok(health) =
+                            process.read::<u32>(controller + CCSPlayerController::m_iPawnHealth)
+                        else {
+                            return None;
                         };
+
+                        let Ok(is_alive) =
+                            process.read::<bool>(controller + CCSPlayerController::m_bPawnIsAlive)
+                        else {
+                            return None;
+                        };
+
+                        let Ok(spotted) = process.read::<bool>(
+                            pawn + C_CSPlayerPawnBase::m_entitySpottedState
+                                + EntitySpottedState_t::m_bSpotted,
+                        ) else {
+                            return None;
+                        };
+
+                        println!("{}", spotted);
+
+                        let Ok(team_id) = process.read::<u8>(pawn + C_BaseEntity::m_iTeamNum)
+                        else {
+                            return None;
+                        };
+
+                        let Ok(weapon_id) = process.read_pointer::<u8>(
+                            pawn + C_CSPlayerPawnBase::m_pClippingWeapon,
+                            Some(&[C_EconEntity::m_AttributeManager
+                                + C_EconItemView::m_iItemDefinitionIndex
+                                + C_AttributeContainer::m_Item]),
+                        ) else {
+                            return None;
+                        };
+
+                        // println!("{}", weapon_id);
+                        let entity = EntityBuilder::default()
+                            .health(health)
+                            .alive(is_alive)
+                            .spotted(spotted)
+                            .team(Team::from(team_id))
+                            .weapon(Weapon::from(weapon_id))
+                            .build()
+                            .unwrap();
+
+                        entities.push(entity);
                     }
                     Err(_) => continue,
                 }
@@ -144,37 +245,6 @@ impl Entity {
         }
 
         Some(entities)
-    }
-
-    pub fn get_entity(process: &Memory, pawn: usize) -> Option<Entity> {
-        let (Ok(health), Ok(is_alive), Ok(spotted), Ok(team_id)) = (
-            process.read::<u32>(pawn + CCSPlayerController::m_iPawnHealth),
-            process.read::<bool>(pawn + CCSPlayerController::m_bPawnIsAlive),
-            process.read::<bool>(
-                pawn + C_CSPlayerPawnBase::m_entitySpottedState + EntitySpottedState_t::m_bSpotted,
-            ),
-            process.read::<u8>(pawn + C_BaseEntity::m_iTeamNum),
-        ) else {
-            return None;
-        };
-
-        let Ok(weapon_id) = process.read_pointer::<u8>(
-            pawn + C_CSPlayerPawnBase::m_pClippingWeapon,
-            Some(&[C_EconEntity::m_AttributeManager
-                + C_EconItemView::m_iItemDefinitionIndex
-                + C_AttributeContainer::m_Item]),
-        ) else {
-            return None;
-        };
-
-        Some(Entity::new(
-            health,
-            is_alive,
-            spotted,
-            team_id,
-            weapon_id as u8,
-            pawn,
-        ))
     }
 }
 
@@ -230,13 +300,22 @@ pub enum Weapon {
     Unknown(u8),
 }
 
+impl Default for Weapon {
+    fn default() -> Self {
+        Self::Unknown(0)
+    }
+}
+
 impl Weapon {
     pub fn name(&self) -> String {
         self.to_string()
     }
 
     pub fn id(&self) -> u8 {
-        0
+        match self {
+            Self::Unknown(id) => *id,
+            _ => 0,
+        }
     }
 
     pub fn is_throwable(&self) -> bool {

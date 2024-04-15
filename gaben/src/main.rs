@@ -16,30 +16,36 @@ fn main() -> Result<(), anyhow::Error> {
     if let Ok(process) = Memory::new(CS_PROCESS_NAME) {
         let process = Arc::new(process);
 
-        let (ptx, prx) = mpsc::channel::<Arc<Player>>();
-        let (etx, erx) = mpsc::channel::<Arc<Vec<Entity>>>();
+        let (ptx, prx) = mpsc::channel::<Arc<Option<Player>>>();
+        let (etx, erx) = mpsc::channel::<Arc<Option<Vec<Entity>>>>();
         {
             let process = Arc::clone(&process);
             thread::spawn(move || {
                 let modules = &process.modules;
                 let mut rng = rand::thread_rng();
-                let mut timer = Timer::default();
                 let mut periodic = Punishments::new();
 
                 periodic.add(Box::new(BunnyMan::new()));
 
-                loop {
-                    let player = prx.recv().ok();
-                    let entities = erx.recv().ok();
+                let mut sc_timer = Timer::default();
+                let mut tf_timer = Timer::default();
+                let mut triggered = false;
 
-                    if timer.elapsed(Duration::from_secs(60 * 2)) {
-                        if timer.elapsed(Duration::from_secs(rng.gen_range(15..=30))) {
-                            periodic.next().action(
-                                &process,
-                                player.as_deref(),
-                                entities.as_deref(),
-                            );
-                        }
+                loop {
+                    let player = prx.recv().ok().unwrap();
+                    let entities = erx.recv().ok().unwrap();
+
+                    if sc_timer.elapsed(Duration::from_secs(60)) {
+                        println!("triggered");
+                        tf_timer.reset();
+                        triggered = true;
+                    }
+
+                    if tf_timer.elapsed(Duration::from_secs(rng.gen_range(15..=30))) && triggered {
+                        triggered = false
+                    } else if triggered {
+                        let p = periodic.next();
+                        p.action(&process, &player, &entities);
                     }
                 }
             });
@@ -48,8 +54,9 @@ fn main() -> Result<(), anyhow::Error> {
         let client = process.modules.get("client.dll").unwrap();
         let mut continuous = Punishments::new();
 
-        continuous.add(Box::new(SlippyWippyWeapon::new()));
+        continuous.add(Box::new(SlipperyWeapons::new()));
         continuous.add(Box::new(CursedSnipers::new()));
+        continuous.add(Box::new(FragileTrigger::new()));
 
         loop {
             let Ok(local_player) = process.read::<usize>(client.address + offsets::DW_LOCAL_PAWN)
@@ -57,16 +64,11 @@ fn main() -> Result<(), anyhow::Error> {
                 continue;
             };
 
-            let Some(player) = Player::new(&process, local_player) else {
-                continue;
-            };
-
-            let Some(entities) = Entity::get_entities(&process, client) else {
-                continue;
-            };
+            let entities = Entity::read_entities(&process, client);
+            let player = Player::read(&process, local_player);
 
             for punishment in continuous.values() {
-                punishment.action(&process, Some(&player), Some(&entities));
+                punishment.action(&process, &player, &entities);
             }
 
             ptx.send(Arc::new(player)).unwrap();

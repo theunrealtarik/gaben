@@ -4,3 +4,6 @@ members = [
 	"sdk",
 	"macros",
 ]
+
+[workspace.dependencies]
+derive-getters = "0.3.0"

@@ -30,6 +30,10 @@ impl Timer {
             false
         }
     }
+
+    pub fn reset(&mut self) {
+        self.0 = Instant::now();
+    }
 }
 
 pub struct Timers<T>(pub HashMap<T, Timer>)
