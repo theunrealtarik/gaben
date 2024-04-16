@@ -36,6 +36,7 @@ impl Timer {
     }
 }
 
+#[derive(Default)]
 pub struct Timers<T>(pub HashMap<T, Timer>)
 where
     T: std::hash::Hash + std::cmp::Eq + std::cmp::PartialEq;

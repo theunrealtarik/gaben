@@ -40,11 +40,10 @@ pub mod punishments {
         fn action(&self, process: &Memory, player: &Option<Player>, entities: &Option<Vec<Entity>>);
         fn withdraw(
             &self,
-            process: &Memory,
-            player: &Option<Player>,
-            entities: &Option<Vec<Entity>>,
+            _process: &Memory,
+            _player: &Option<Player>,
+            _entities: &Option<Vec<Entity>>,
         ) {
-            return;
         }
     }
 

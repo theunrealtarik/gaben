@@ -4,7 +4,6 @@
     <CheatEntry>
       <ID>0</ID>
       <Description>"controlleer"</Description>
-      <LastState Value="0" RealAddress="7FF9F4B41578"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x1911578</Address>
@@ -42,7 +41,6 @@
     <CheatEntry>
       <ID>14</ID>
       <Description>"weapon"</Description>
-      <LastState Value="7" RealAddress="1B9488D4AA2"/>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x17361E8</Address>
@@ -50,6 +48,13 @@
         <Offset>0x1098+0x1BA+0x50</Offset>
         <Offset>0x1308</Offset>
       </Offsets>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>15</ID>
+      <Description>"No description"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>4 Bytes</VariableType>
+      <Address>client.dll + 0x172F0F0</Address>
     </CheatEntry>
   </CheatEntries>
   <UserdefinedSymbols/>

@@ -1,8 +1,10 @@
+use std::sync::Mutex;
+
 use macros::*;
 use sdk::prelude::*;
 
+const ZAZA_FOV: u32 = 200;
 const DEFAULT_FOV: u32 = 68;
-const ZAZA_FOV: u32 = 250;
 const CAMERA_SERVICES: usize = offsets::C_BasePlayerPawn::m_pCameraServices;
 const I_FOV: usize = offsets::CCSPlayerBase_CameraServices::m_iFOV;
 
@@ -10,6 +12,7 @@ const I_FOV: usize = offsets::CCSPlayerBase_CameraServices::m_iFOV;
 pub struct Zaza {
     schedule: PunishmentSchedule,
     name: String,
+    default_fov: Mutex<Option<u32>>,
 }
 
 impl Punishment for Zaza {
@@ -31,11 +34,12 @@ impl Punishment for Zaza {
             return;
         };
 
-        let Ok(curr_fov) = process.read::<u32>(camera_services + I_FOV) else {
-            return;
-        };
+        let mut default_fov = self.default_fov.lock().unwrap();
+        if default_fov.is_none() {
+            *default_fov = process.read::<u32>(camera_services + I_FOV).ok();
+        }
 
-        if !*player.is_scopped() && curr_fov != ZAZA_FOV {
+        if !*player.is_scopped() {
             process
                 .write(camera_services + I_FOV, ZAZA_FOV)
                 .unwrap_or_else(|_| 0);
@@ -43,23 +47,13 @@ impl Punishment for Zaza {
     }
 
     fn withdraw(&self, process: &Memory, player: &Option<Player>, _: &Option<Vec<Entity>>) {
-        let Some(player) = player else {
-            return;
-        };
-
-        let Ok(camera_services) = process.read::<usize>(player.base_address() + CAMERA_SERVICES)
-        else {
-            return;
-        };
-
-        let Ok(curr_fov) = process.read::<u32>(camera_services + I_FOV) else {
-            return;
-        };
-
-        if !*player.is_scopped() && curr_fov != DEFAULT_FOV {
-            process
-                .write(camera_services + I_FOV, DEFAULT_FOV)
-                .unwrap_or_else(|_| 0);
+        if let Some(player) = player {
+            if let Ok(camera_services) =
+                process.read::<usize>(player.base_address() + CAMERA_SERVICES)
+            {
+                let bytes = process.write(camera_services + I_FOV, DEFAULT_FOV);
+                dbg!(&bytes);
+            }
         }
     }
 }

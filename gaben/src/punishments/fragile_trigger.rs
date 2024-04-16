@@ -31,15 +31,6 @@ impl Punishment for FragileTrigger {
                     return;
                 };
 
-                // let Ok(entry) =
-                //     process.read::<usize>(entity_list + 0x8 * (entity_id & 0x7FFF) >> 9 + 0x10)
-                // else {
-                //     return;
-                // };
-                //
-                // let Ok(pawn) = process.read::<usize>(entry + 0x78 * (entity_id & 0x1FF)) else {
-                //     return;
-                // };
                 let Ok(entry) = process.read::<usize>(entity_list + 0x8 * (entity_id >> 9) + 0x10)
                 else {
                     return;
@@ -53,10 +44,6 @@ impl Punishment for FragileTrigger {
                 let Ok(entity_team) = process.read::<u8>(controller + TEAM_NUM) else {
                     return;
                 };
-
-                let entity_is_alive = process
-                    .read::<bool>(controller + PAWN_IS_ALIVE)
-                    .unwrap_or_else(|_| false);
 
                 if *player.team() as u8 == entity_team {
                     Mouse::click(MouseButton::LeftButton);

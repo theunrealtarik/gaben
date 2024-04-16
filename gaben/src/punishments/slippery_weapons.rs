@@ -33,7 +33,8 @@ impl Punishment for SlipperyWeapons {
                 && timer.elapsed(Duration::from_millis(500))
                 && MouseButton::LeftButton.is_pressed()
                 && rand::random::<bool>()
-                && (!player.weapon().is_throwable())
+                && !player.weapon().is_throwable()
+                && !player.weapon().is_knife()
             {
                 Keyboard::stroke(Key::GKey);
             }

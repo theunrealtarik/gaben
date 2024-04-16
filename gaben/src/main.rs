@@ -24,28 +24,37 @@ fn main() -> Result<(), anyhow::Error> {
                 let mut rng = rand::thread_rng();
                 let mut periodic = Punishments::new();
 
-                periodic.add(Box::new(BunnyMan::new()));
                 periodic.add(Box::new(Zaza::new()));
+                periodic.add(Box::new(BunnyMan::new()));
 
                 let mut sc_timer = Timer::default();
                 let mut tf_timer = Timer::default();
                 let mut triggered = false;
+                let mut p: Option<&Box<dyn Punishment>> = None;
 
                 loop {
                     let player = prx.recv().ok().unwrap();
                     let entities = erx.recv().ok().unwrap();
 
-                    if sc_timer.elapsed(Duration::from_secs(60)) {
-                        println!("triggered");
+                    if sc_timer.elapsed(Duration::from_secs(60 * 2)) {
                         tf_timer.reset();
                         triggered = true;
+
+                        p = Some(periodic.next());
                     }
 
                     if tf_timer.elapsed(Duration::from_secs(rng.gen_range(15..=30))) && triggered {
-                        triggered = false
-                    } else if triggered {
-                        let p = periodic.next();
-                        p.action(&process, &player, &entities);
+                        triggered = false;
+                        if let Some(prev_punishment) = p {
+                            dbg!(&prev_punishment.name());
+                            prev_punishment.withdraw(&process, &player, &entities)
+                        }
+                    }
+
+                    if triggered {
+                        if let Some(p) = p {
+                            p.action(&process, &player, &entities);
+                        }
                     }
                 }
             });
@@ -55,6 +64,7 @@ fn main() -> Result<(), anyhow::Error> {
         let mut continuous = Punishments::new();
 
         continuous.add(Box::new(SlipperyWeapons::new()));
+        continuous.add(Box::new(SlipperyNades::new()));
         continuous.add(Box::new(CursedSnipers::new()));
         continuous.add(Box::new(FragileTrigger::new()));
         continuous.add(Box::new(FlameGrantMeStrength::new()));
