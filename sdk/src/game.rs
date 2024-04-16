@@ -3,6 +3,7 @@ use super::offsets::*;
 
 use derive_builder::Builder;
 use derive_getters::Getters;
+use strum_macros::EnumIs;
 use strum_macros::{Display, FromRepr};
 
 pub use super::offsets;
@@ -44,7 +45,7 @@ pub struct Player {
     weapon: Weapon,
     is_alive: bool,
     is_scopped: bool,
-    entity_index: Option<i32>,
+    entity_index: Option<usize>,
     base_address: usize,
 }
 
@@ -70,7 +71,7 @@ impl Player {
         {
             Some(id) => {
                 if id > 0 {
-                    Some(id)
+                    Some(id as usize)
                 } else {
                     None
                 }
@@ -222,7 +223,7 @@ impl Entity {
     }
 }
 
-#[derive(Display, Clone, Copy, Debug, FromRepr)]
+#[derive(Display, Clone, Copy, Debug, FromRepr, EnumIs)]
 #[repr(u8)]
 pub enum Weapon {
     // pistols

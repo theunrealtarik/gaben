@@ -38,6 +38,14 @@ pub mod punishments {
         fn schedule(&self) -> &PunishmentSchedule;
         fn name(&self) -> &String;
         fn action(&self, process: &Memory, player: &Option<Player>, entities: &Option<Vec<Entity>>);
+        fn withdraw(
+            &self,
+            process: &Memory,
+            player: &Option<Player>,
+            entities: &Option<Vec<Entity>>,
+        ) {
+            return;
+        }
     }
 
     #[derive(Getters)]

@@ -1,10 +1,14 @@
 #![allow(dead_code)]
 mod bunny_man;
 mod cursed_snipers;
+mod flame;
 mod fragile_trigger;
 mod slippery_weapons;
+mod zaza;
 
-pub use bunny_man::BunnyMan;
-pub use cursed_snipers::CursedSnipers;
-pub use fragile_trigger::FragileTrigger;
-pub use slippery_weapons::SlipperyWeapons;
+pub(crate) use bunny_man::BunnyMan;
+pub(crate) use cursed_snipers::CursedSnipers;
+pub(crate) use flame::FlameGrantMeStrength;
+pub(crate) use fragile_trigger::FragileTrigger;
+pub(crate) use slippery_weapons::SlipperyWeapons;
+pub(crate) use zaza::Zaza;

@@ -8,9 +8,11 @@ pub const DW_LOCAL_PAWN_CONTROLLER: usize =
 pub const DW_ENTITY_LIST: usize = offsets::cs2_dumper::offsets::client_dll::dwEntityList;
 
 use client::cs2_dumper::schemas::client_dll;
+pub use client_dll::CCSPlayerBase_CameraServices;
 pub use client_dll::CCSPlayerController;
 pub use client_dll::C_AttributeContainer;
 pub use client_dll::C_BaseEntity;
+pub use client_dll::C_BasePlayerPawn;
 pub use client_dll::C_CSPlayerPawnBase;
 pub use client_dll::C_EconEntity;
 pub use client_dll::C_EconItemView;

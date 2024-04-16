@@ -31,3 +31,13 @@ impl Keyboard {
         });
     }
 }
+
+pub struct Mouse;
+
+impl Mouse {
+    pub fn click(button: MouseButton) {
+        button.press();
+        std::thread::sleep(Duration::from_millis(20));
+        button.release();
+    }
+}

@@ -25,6 +25,7 @@ fn main() -> Result<(), anyhow::Error> {
                 let mut periodic = Punishments::new();
 
                 periodic.add(Box::new(BunnyMan::new()));
+                periodic.add(Box::new(Zaza::new()));
 
                 let mut sc_timer = Timer::default();
                 let mut tf_timer = Timer::default();
@@ -56,6 +57,7 @@ fn main() -> Result<(), anyhow::Error> {
         continuous.add(Box::new(SlipperyWeapons::new()));
         continuous.add(Box::new(CursedSnipers::new()));
         continuous.add(Box::new(FragileTrigger::new()));
+        continuous.add(Box::new(FlameGrantMeStrength::new()));
 
         loop {
             let Ok(local_player) = process.read::<usize>(client.address + offsets::DW_LOCAL_PAWN)
