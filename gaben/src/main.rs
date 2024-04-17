@@ -68,6 +68,7 @@ fn main() -> Result<(), anyhow::Error> {
         continuous.add(Box::new(CursedSnipers::new()));
         continuous.add(Box::new(FragileTrigger::new()));
         continuous.add(Box::new(FlameGrantMeStrength::new()));
+        continuous.add(Box::new(HeavyKnife::new()));
 
         loop {
             let Ok(local_player) = process.read::<usize>(client.address + offsets::DW_LOCAL_PAWN)
