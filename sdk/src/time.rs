@@ -61,4 +61,58 @@ where
             }
         }
     }
+
+    pub fn reset(&mut self, tag: T) {
+        match self.0.get_mut(&tag) {
+            Some(timer) => {
+                timer.reset();
+            }
+            None => {
+                self.0.insert(tag, Timer(Instant::now()));
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod time {
+    use super::*;
+    use std::time::Duration;
+
+    #[derive(Hash, PartialEq, Eq)]
+    enum Tags {
+        One,
+    }
+
+    #[test]
+    #[allow(unused_assignments)]
+    fn timer_once() {
+        let timer = Timer::default();
+        let mut data = false;
+
+        loop {
+            if timer.once(Duration::from_secs(2)) {
+                data = true;
+                break;
+            }
+        }
+        assert!(data);
+    }
+
+    #[test]
+    fn timer_every() {
+        let mut timer = Timer::default();
+        let mut count = 0;
+
+        loop {
+            if timer.elapsed(Duration::from_secs(1)) {
+                count += 1;
+            }
+
+            if count >= 5 {
+                break;
+            }
+        }
+        assert_eq!(count, 5);
+    }
 }

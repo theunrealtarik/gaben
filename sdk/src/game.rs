@@ -36,7 +36,7 @@ impl From<u8> for Team {
     }
 }
 
-#[derive(Default, Getters, Clone, Copy)]
+#[derive(Default, Getters, Clone, Copy, Debug)]
 pub struct Player {
     health: u32,
     #[getter(rename = "is_spotted")]
@@ -50,7 +50,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn read(process: &Memory, local_player: usize) -> Option<Self> {
+    pub fn read(process: &Process, local_player: usize) -> Option<Self> {
         let client = process.modules.get("client.dll").unwrap();
         let Ok(local_controller) = process.read::<usize>(client.address + DW_LOCAL_PAWN_CONTROLLER)
         else {
@@ -138,7 +138,7 @@ pub struct Entity {
 }
 
 impl Entity {
-    pub fn read_entities<'a>(process: &'a Memory, client: &'a Module) -> Option<Vec<Entity>> {
+    pub fn read_entities<'a>(process: &'a Process, client: &'a Module) -> Option<Vec<Entity>> {
         let mut entities = Vec::new();
 
         let Ok(entity_list) = process.read::<usize>(client.address + DW_ENTITY_LIST) else {

@@ -17,18 +17,18 @@ use windows::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
 use super::prelude::*;
 
 #[derive(Debug)]
-pub struct Memory {
+pub struct Process {
     pub process_id: Pid,
     pub process_handle: HANDLE,
     pub snap_handle: HANDLE,
     pub base_module: Module,
-    pub modules: HashMap<String, Module>,
+    pub modules: Modules,
 }
 
 #[allow(dead_code)]
-impl Memory {
+impl Process {
     pub fn new(process_name: &str) -> Result<Self, String> {
-        let mut modules: HashMap<String, Module> = HashMap::new();
+        let mut modules: Modules = HashMap::new();
         let mut system = System::new();
         system.refresh_all();
 
@@ -179,7 +179,7 @@ impl Memory {
     }
 }
 
-impl Drop for Memory {
+impl Drop for Process {
     fn drop(&mut self) {
         self.close_process_handle().unwrap();
     }
@@ -194,6 +194,9 @@ pub struct Module {
     pub size: u32,
     pub id: u32,
 }
+
+/// A hash map of the process modules
+pub type Modules = HashMap<String, Module>;
 
 impl From<MODULEENTRY32> for Module {
     fn from(entry: MODULEENTRY32) -> Self {
@@ -210,5 +213,39 @@ impl From<MODULEENTRY32> for Module {
             size: entry.dwSize,
             id: entry.th32ModuleID,
         }
+    }
+}
+
+#[cfg(test)]
+mod memory {
+    use super::*;
+    const PROCESS_NAME: &str = "program.exe";
+
+    #[test]
+    fn open_process() {
+        Process::new(PROCESS_NAME).unwrap();
+    }
+
+    #[test]
+    fn process_base_module() {
+        let process = Process::new(PROCESS_NAME).unwrap();
+        assert_eq!(process.base_module.name, PROCESS_NAME);
+    }
+
+    #[test]
+    fn read_write_process_memory() {
+        let process = Process::new(PROCESS_NAME).unwrap();
+        let Ok(pointer) = process.calculate_pointer(
+            process.base_module.address + 0x241E0,
+            &[0x18, 0x18, 0xc8, 0x28, 0x8ec],
+        ) else {
+            panic!("failed to calculate pointer");
+        };
+
+        if let Ok(data) = process.read::<i32>(pointer) {
+            assert_eq!(data, 100);
+        } else {
+            panic!("failed to read process memory");
+        };
     }
 }

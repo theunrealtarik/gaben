@@ -5,9 +5,6 @@ pub mod offsets;
 pub mod time;
 pub mod types;
 
-mod test;
-
-#[allow(dead_code, unused_imports)]
 pub mod prelude {
     pub const CS_PROCESS_NAME: &str = "cs2.exe";
 
@@ -37,10 +34,15 @@ pub mod punishments {
     pub trait Punishment: Send + Sync {
         fn schedule(&self) -> &PunishmentSchedule;
         fn name(&self) -> &String;
-        fn action(&self, process: &Memory, player: &Option<Player>, entities: &Option<Vec<Entity>>);
+        fn action(
+            &self,
+            process: &Process,
+            player: &Option<Player>,
+            entities: &Option<Vec<Entity>>,
+        );
         fn withdraw(
             &self,
-            _process: &Memory,
+            _process: &Process,
             _player: &Option<Player>,
             _entities: &Option<Vec<Entity>>,
         ) {
@@ -92,5 +94,12 @@ pub mod utils {
                 .collect::<Vec<u8>>(),
         )
         .unwrap_or_else(|_| String::new())
+    }
+
+    #[test]
+    fn stringify_vec_bytes() {
+        let bytes = vec![0x36, 0x39];
+        let string = stringify_bytes_u8(bytes);
+        assert_eq!(string, String::from("69"));
     }
 }

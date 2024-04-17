@@ -1,18 +1,5 @@
-#![allow(dead_code)]
-mod bunny_man;
-mod cursed_snipers;
-mod flame;
-mod fragile_trigger;
-mod heavy_knife;
-mod slippery_nades;
-mod slippery_weapons;
-mod zaza;
+mod perma;
+mod temp;
 
-pub(crate) use bunny_man::BunnyMan;
-pub(crate) use cursed_snipers::CursedSnipers;
-pub(crate) use flame::FlameGrantMeStrength;
-pub(crate) use fragile_trigger::FragileTrigger;
-pub(crate) use heavy_knife::HeavyKnife;
-pub(crate) use slippery_nades::SlipperyNades;
-pub(crate) use slippery_weapons::SlipperyWeapons;
-pub(crate) use zaza::Zaza;
+pub(crate) use perma::ContinuousPunishments;
+pub(crate) use temp::PeriodicPunishments;
