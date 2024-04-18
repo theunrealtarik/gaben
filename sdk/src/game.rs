@@ -18,7 +18,7 @@ pub enum Modifier {
     Minus = 256,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, EnumIs)]
 pub enum Team {
     #[default]
     Unknown,

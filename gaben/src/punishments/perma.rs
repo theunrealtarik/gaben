@@ -27,7 +27,9 @@ impl ContinuousPunishments {
         }
     }
 
-    /// Flame Grant Me Strength
+    /// *Flame Grant Me Strength*:
+    /// Whenever the cheater holds a molotov or an incendiary, he will automatically throw it
+    /// with a short-throw (mouse right button hold)
     fn apply_flame_punishment(process: &Process, modules: &Modules, player: &Player) {
         let client = modules.get("client.dll").unwrap().address;
 
@@ -42,14 +44,17 @@ impl ContinuousPunishments {
         }
     }
 
-    /// Heavy Knife
+    /// *Heavy Knife*:
+    /// Since melees in the source engine makes the player run faster, this punishment
+    /// holds the LShfit key whenever the cheater has a knife in hands which will make him
+    /// run solwer
     fn apply_heavy_knife_punishment(player: &Player) {
         if player.weapon().is_knife() {
             Keyboard::stroke(Key::LShiftKey);
         }
     }
 
-    /// Cursed Snipers
+    /// *Cursed Snipers*
     fn apply_cursed_snipers_punishment(player: &Player) {
         match *player.weapon() {
             Weapon::AWP | Weapon::SSG08 if *player.is_scopped() => {
@@ -59,7 +64,9 @@ impl ContinuousPunishments {
         }
     }
 
-    /// Slippery Nades
+    /// *Slippery Nades*:
+    /// Everytime the cheater tries to throw a nade ([Weapon::Grenade] [Weapon::FlashBang]
+    /// [Weapon::Smoke] [Weapon::Decoy]) he will drop it instead
     fn apply_slippery_nades_punishment(player: &Player) {
         if player.weapon().is_throwable()
             && !(player.weapon().is_molotov() || player.weapon().is_incendiary())
@@ -69,9 +76,15 @@ impl ContinuousPunishments {
         }
     }
 
-    /// Slippery Weapons
+    /// *Slippery Weapons*:
+    /// If the cheater started firing with his weapon while his team or himself has spotted an
+    /// enemy, there's a 50% chance at every tick that he will drop his weapon automatically
+    /// if the previous two conditions are also met
     fn apply_slippery_weapons_punishment(player: &Player, entities: &Vec<Entity>) {
-        let spotted_entities = entities.iter().filter(|entity| *entity.spotted()).count();
+        let spotted_entities = entities
+            .iter()
+            .filter(|entity| *entity.spotted() && !entity.team().is_unknown())
+            .count();
 
         if spotted_entities > 0
             && MouseButton::LeftButton.is_pressed()
@@ -83,7 +96,8 @@ impl ContinuousPunishments {
         }
     }
 
-    /// Fragile Trigger
+    /// *Fragile Trigger*:
+    /// If  the cheater aimed at his teammates, he will automatically shot at'em
     fn apply_fragile_trigger_punishment(process: &Process, modules: &Modules, player: &Player) {
         let client = modules.get("client.dll").unwrap();
 
