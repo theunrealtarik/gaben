@@ -31,9 +31,11 @@ fn attach(process: Process, window: Window) {
         });
     }
 
-    let client = process.modules.get("client.dll").unwrap();
-    let mut continuous = ContinuousPunishments::new();
+    let Some(client) = process.modules.get("client.dll") else {
+        return;
+    };
 
+    let mut continuous = ContinuousPunishments::new();
     loop {
         #[cfg(debug_assertions)]
         {
@@ -71,7 +73,7 @@ fn main() {
     logger::init_env();
     Keyboard::listen();
 
-    log::info!("monitoring ...");
+    log::info!("MONITORING...");
     loop {
         thread::sleep(Duration::from_secs(1));
 
