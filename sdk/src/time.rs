@@ -45,6 +45,10 @@ impl<T> Timers<T>
 where
     T: std::hash::Hash + std::cmp::Eq + std::cmp::PartialEq,
 {
+    pub fn new() -> Self {
+        Self { 0: HashMap::new() }
+    }
+
     pub fn elapsed(&mut self, tag: T, duration: Duration) -> bool {
         match self.0.get_mut(&tag) {
             Some(timer) => {
@@ -72,17 +76,24 @@ where
             }
         }
     }
+
+    pub fn add(&mut self, tag: T) {
+        self.0.insert(tag, Timer::default());
+    }
+
+    pub fn get(&self, tag: T) -> Option<&Timer> {
+        self.0.get(&tag)
+    }
+
+    pub fn get_mut(&mut self, tag: T) -> Option<&mut Timer> {
+        self.0.get_mut(&tag)
+    }
 }
 
 #[cfg(test)]
 mod time {
     use super::*;
     use std::time::Duration;
-
-    #[derive(Hash, PartialEq, Eq)]
-    enum Tags {
-        One,
-    }
 
     #[test]
     #[allow(unused_assignments)]

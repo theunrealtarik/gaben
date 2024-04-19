@@ -7,6 +7,7 @@ pub mod types;
 
 pub mod prelude {
     pub const CS_PROCESS_NAME: &str = "cs2.exe";
+    pub const CS_MAIN_WINDOW_NAME: &str = "Counter-Strike 2";
 
     pub use super::game::*;
     pub use super::inputs::*;
@@ -19,6 +20,8 @@ pub mod prelude {
 }
 
 pub mod punishments {
+    use std::sync::Arc;
+
     use derive_getters::Getters;
 
     use super::game::*;
@@ -49,30 +52,56 @@ pub mod punishments {
         }
     }
 
-    #[derive(Getters)]
+    /// A trait that must be implemented by a punishments-executor
+    pub trait PunishmentsExecutor {
+        fn run(
+            &mut self,
+            process: Arc<Process>,
+            player: Arc<Option<Player>>,
+            entities: Arc<Option<Vec<Entity>>>,
+        );
+        fn punishments(&self) -> &Punishments;
+        fn add(&mut self, p: Box<dyn Punishment>);
+    }
+
+    #[derive(Getters, Default)]
     pub struct Punishments {
-        values: Vec<Box<dyn Punishment>>,
-        index: usize,
+        elements: Vec<Box<dyn Punishment>>,
+        curr_index: usize,
+        prev_index: Option<usize>,
     }
 
     impl Punishments {
         pub fn new() -> Self {
-            Self {
-                values: Vec::new(),
-                index: 0,
-            }
+            Self::default()
         }
 
         pub fn add(&mut self, p: Box<dyn Punishment>) {
-            self.values.push(p);
+            self.elements.push(p);
         }
 
-        pub fn next(&mut self) -> &Box<dyn Punishment> {
-            let value = self.values.get(self.index);
-            self.index = (self.index + 1) % self.values.len();
+        pub fn active(&self) -> Option<&Box<dyn Punishment>> {
+            self.elements.get(self.curr_index)
+        }
 
-            let value = value.clone().unwrap();
+        pub fn next(&mut self) -> Option<&Box<dyn Punishment>> {
+            let length = self.elements.len();
+
+            if self.elements.is_empty() {
+                return None;
+            }
+
+            let value = self.elements.get(self.curr_index);
+            self.prev_index = Some(self.curr_index);
+            self.curr_index = (self.curr_index + 1) % length;
             value
+        }
+
+        pub fn prev(&self) -> Option<&Box<dyn Punishment>> {
+            match self.prev_index {
+                Some(index) => self.elements.get(index),
+                None => None,
+            }
         }
     }
 }
@@ -101,5 +130,24 @@ pub mod utils {
         let bytes = vec![0x36, 0x39];
         let string = stringify_bytes_u8(bytes);
         assert_eq!(string, String::from("69"));
+    }
+}
+
+pub mod logger {
+    pub use env_logger;
+    use env_logger::Env;
+
+    pub struct Logger;
+    impl Logger {
+        pub fn env() -> Env<'static> {
+            let env = Env::default()
+                .filter_or("RUST_LOG", "sdk=trace,gaben=trace")
+                .write_style_or("RUST_STYLE_LOG", "always");
+            env
+        }
+    }
+
+    pub fn init_env() {
+        env_logger::init_from_env(Logger::env());
     }
 }

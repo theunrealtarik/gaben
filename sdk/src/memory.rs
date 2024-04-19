@@ -4,8 +4,12 @@ use std::collections::HashMap;
 use std::mem::MaybeUninit;
 use std::path::PathBuf;
 
+use derive_getters::Getters;
 use sysinfo::{Pid, System};
-use windows::Win32::Foundation::{CloseHandle, HANDLE};
+use windows::core::{HRESULT, PCSTR};
+use windows::Win32::Foundation::{
+    CloseHandle, ERROR_INVALID_PARAMETER, ERROR_NOT_FOUND, HANDLE, HWND,
+};
 use windows::Win32::System::Diagnostics::Debug::{ReadProcessMemory, WriteProcessMemory};
 use windows::Win32::System::Diagnostics::ToolHelp::{
     CreateToolhelp32Snapshot, Module32First, Module32Next, MODULEENTRY32, TH32CS_SNAPMODULE,
@@ -13,8 +17,10 @@ use windows::Win32::System::Diagnostics::ToolHelp::{
 };
 use windows::Win32::System::ProcessStatus::{GetModuleBaseNameA, GetModuleFileNameExA};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_ALL_ACCESS};
+use windows::Win32::UI::WindowsAndMessaging::{FindWindowA, GetForegroundWindow, GetWindowRect};
 
-use super::prelude::*;
+use super::types::*;
+use super::utils::*;
 
 #[derive(Debug)]
 pub struct Process {
@@ -93,6 +99,7 @@ impl Process {
         }
 
         unsafe { CloseHandle(snap_handle).unwrap() };
+        log::info!("{:?}", base_module);
         Ok(Self {
             process_id,
             process_handle,
@@ -119,6 +126,27 @@ impl Process {
         }
     }
 
+    /// Reads non-zeroed value from memory
+    pub fn read_n<T>(&self, address: usize) -> Result<T, windows::core::Error>
+    where
+        T: PartialEq + Eq + PartialOrd<T>,
+        T: Default,
+    {
+        match self.read::<T>(address) {
+            Ok(value) => {
+                if value != T::default() {
+                    Ok(value)
+                } else {
+                    Err(windows::core::Error::new(
+                        HRESULT(ERROR_INVALID_PARAMETER.0 as i32),
+                        "zeroed value",
+                    ))
+                }
+            }
+            Err(err) => Err(err),
+        }
+    }
+
     pub fn write<T>(&self, address: usize, data: T) -> Result<usize, windows::core::Error> {
         let mut bytes: usize = 0;
         match unsafe {
@@ -135,7 +163,7 @@ impl Process {
         }
     }
 
-    pub fn calculate_pointer(
+    pub fn trace_address(
         &self,
         base_address: usize,
         offsets: &[usize],
@@ -168,10 +196,28 @@ impl Process {
             None => &[],
         };
 
-        match self.calculate_pointer(address, offsets) {
+        match self.trace_address(address, offsets) {
             Ok(address) => self.read::<T>(address),
             Err(err) => Err(err),
         }
+    }
+
+    pub fn read_string(&self, address: usize) -> Result<String, windows::core::Error> {
+        let mut buffer = String::new();
+
+        loop {
+            match self.read::<char>(address) {
+                Ok(character) => {
+                    buffer.push(character);
+                    if character == '\0' {
+                        break;
+                    }
+                }
+                Err(err) => return Err(err),
+            }
+        }
+
+        Ok(buffer)
     }
 
     pub fn close_process_handle(&self) -> Result<(), windows::core::Error> {
@@ -216,6 +262,88 @@ impl From<MODULEENTRY32> for Module {
     }
 }
 
+#[derive(Debug, Getters)]
+pub struct Window {
+    name: String,
+    rect: WindowRect,
+    position: Vec2<i32>,
+    width: u32,
+    height: u32,
+    handle: HWND,
+}
+
+impl Window {
+    pub fn find(name: &str) -> Result<Self, windows::core::Error> {
+        let name = format!("{}\0", name);
+        let handle = unsafe { FindWindowA(PCSTR::null(), PCSTR(name.as_ptr())) };
+
+        if handle == HWND(0) {
+            return Err(windows::core::Error::new(
+                ERROR_NOT_FOUND.into(),
+                format!("window ({:?}) was not found", name),
+            ));
+        }
+
+        let mut rect = windows::Win32::Foundation::RECT::default();
+
+        log::info!("HWND {:?}", handle);
+
+        if let Err(err) = unsafe { GetWindowRect(handle, &mut rect) } {
+            log::error!("failed to retreive {:?} window rect", name);
+            return Err(err);
+        }
+
+        let rect = WindowRect::from(rect);
+        let position = Vec2 {
+            x: *rect.left(),
+            y: *rect.top(),
+        };
+
+        Ok(Self {
+            name: String::from(name),
+            rect,
+            position,
+            width: rect.width(),
+            height: rect.height(),
+            handle,
+        })
+    }
+
+    pub fn is_focused(&self) -> bool {
+        let handle = unsafe { GetForegroundWindow() };
+        handle == self.handle
+    }
+}
+
+#[derive(Debug, Getters, Copy, Clone)]
+pub struct WindowRect {
+    left: i32,
+    top: i32,
+    right: i32,
+    bottom: i32,
+}
+
+impl WindowRect {
+    pub fn width(&self) -> u32 {
+        (self.right - self.left).abs() as u32
+    }
+
+    pub fn height(&self) -> u32 {
+        (self.bottom - self.top).abs() as u32
+    }
+}
+
+impl From<windows::Win32::Foundation::RECT> for WindowRect {
+    fn from(value: windows::Win32::Foundation::RECT) -> Self {
+        Self {
+            left: value.left,
+            top: value.top,
+            right: value.right,
+            bottom: value.bottom,
+        }
+    }
+}
+
 #[cfg(test)]
 mod memory {
     use super::*;
@@ -235,7 +363,7 @@ mod memory {
     #[test]
     fn read_write_process_memory() {
         let process = Process::new(PROCESS_NAME).unwrap();
-        let Ok(pointer) = process.calculate_pointer(
+        let Ok(pointer) = process.trace_address(
             process.base_module.address + 0x241E0,
             &[0x18, 0x18, 0xc8, 0x28, 0x8ec],
         ) else {

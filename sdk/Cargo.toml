@@ -13,6 +13,8 @@ ambassador = "0.3.6"
 derive-getters = { workspace = true }
 derive_builder = "0.20.0"
 rand = "0.8.5"
+log = { workspace = true }
+env_logger = { workspace = true }
 
 [dependencies.windows]
 version = "0.56.0"
@@ -20,6 +22,7 @@ features = [
 	"Win32_Foundation",
 	"Win32_System",
 	"Win32_UI_Input_KeyboardAndMouse",
+	"Win32_UI_WindowsAndMessaging",
 	"Win32_System_Diagnostics_Debug",
 	"Win32_System_Diagnostics_ToolHelp",
 	"Win32_System_ProcessStatus",

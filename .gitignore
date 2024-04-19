@@ -2,4 +2,5 @@
 .vscode
 sdk/src/offsets/generated/*.rs
 sdk/src/offsets/generated/mod.rs
-skd/external/output
+sdk/external/output
+*.exe

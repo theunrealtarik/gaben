@@ -2,50 +2,67 @@ use macros::*;
 use rand::prelude::*;
 use sdk::prelude::*;
 use std::{
-    sync::{mpsc::Receiver, Arc, Mutex}, // fearless concurrency mentioned letsgooo!!!!
+    sync::{Arc, Mutex}, // fearless concurrency mentioned letsgooo!!!!
     time::Duration,
 };
 
 /// Responsible for scheduling periodic punishments
-pub struct PeriodicPunishments;
+pub struct PeriodicPunishments {
+    punishments: Punishments,
+    span_timer: Timer,
+    interval_timer: Timer,
+    busy: bool,
+}
+
 impl PeriodicPunishments {
-    pub fn run(
+    pub fn new() -> Self {
+        Self {
+            punishments: Punishments::new(),
+            span_timer: Timer::default(),
+            interval_timer: Timer::default(),
+            busy: false,
+        }
+    }
+}
+
+impl PunishmentsExecutor for PeriodicPunishments {
+    fn run(
+        &mut self,
         process: Arc<Process>,
-        prx: Receiver<Arc<Option<Player>>>,
-        erx: Receiver<Arc<Option<Vec<Entity>>>>,
+        player: Arc<Option<Player>>,
+        entities: Arc<Option<Vec<Entity>>>,
     ) {
         let mut rng = rand::thread_rng();
-        let mut punishments = Punishments::new();
-        let mut active: Option<&Box<dyn Punishment>> = None;
+        let mut span = self.span_timer;
+        let mut interval = self.interval_timer;
 
-        let mut tf_timer = Timer::default();
-        let mut sc_timer = Timer::default();
-        let mut busy = false;
+        if interval.elapsed(Duration::from_secs(60 * 2)) {
+            span.reset();
+            self.busy = true;
+            self.punishments.next();
+        }
 
-        loop {
-            let player = prx.recv().ok().unwrap();
-            let entities = erx.recv().ok().unwrap();
-
-            if sc_timer.elapsed(Duration::from_secs(60 * 2)) {
-                tf_timer.reset();
-                busy = true;
-                active = Some(punishments.next());
-            }
-
-            if tf_timer.elapsed(Duration::from_secs(rng.gen_range(15..=30))) && busy {
-                busy = false;
-                if let Some(prev_punishment) = active {
-                    dbg!(&prev_punishment.name());
-                    prev_punishment.withdraw(&process, &player, &entities)
-                }
-            }
-
-            if busy {
-                if let Some(p) = active {
-                    p.action(&process, &player, &entities);
-                }
+        if span.elapsed(Duration::from_secs(rng.gen_range(15..=30))) && self.busy {
+            self.busy = false;
+            if let Some(prev_punishment) = self.punishments.prev() {
+                log::info!("withdraw {:?}", prev_punishment.name());
+                prev_punishment.withdraw(&process, &player, &entities)
             }
         }
+
+        if self.busy {
+            if let Some(p) = self.punishments.prev() {
+                p.action(&process, &player, &entities);
+            }
+        }
+    }
+
+    fn punishments(&self) -> &Punishments {
+        &self.punishments
+    }
+
+    fn add(&mut self, p: Box<dyn Punishment>) {
+        self.punishments.add(p);
     }
 }
 

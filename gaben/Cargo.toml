@@ -7,5 +7,6 @@ edition = "2021"
 anyhow = "1.0.81"
 rand = "0.8.5"
 derive-getters = { workspace = true }
+log = { workspace = true }
 sdk = { path = "../sdk" }
 macros = { path = "../macros" }

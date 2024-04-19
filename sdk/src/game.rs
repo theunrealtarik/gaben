@@ -45,14 +45,14 @@ pub struct Player {
     weapon: Weapon,
     is_alive: bool,
     is_scopped: bool,
-    entity_index: Option<usize>,
     base_address: usize,
 }
 
 impl Player {
     pub fn read(process: &Process, local_player: usize) -> Option<Self> {
         let client = process.modules.get("client.dll").unwrap();
-        let Ok(local_controller) = process.read::<usize>(client.address + DW_LOCAL_PAWN_CONTROLLER)
+        let Ok(local_controller) =
+            process.read_n::<usize>(client.address + DW_LOCAL_PAWN_CONTROLLER)
         else {
             return None;
         };
@@ -63,20 +63,6 @@ impl Player {
 
         let Ok(flags) = process.read::<u32>(local_player + C_BaseEntity::m_fFlags) else {
             return None;
-        };
-
-        let entity_index = match process
-            .read::<i32>(local_player + C_CSPlayerPawnBase::m_iIDEntIndex)
-            .ok()
-        {
-            Some(id) => {
-                if id > 0 {
-                    Some(id as usize)
-                } else {
-                    None
-                }
-            }
-            None => None,
         };
 
         let Ok(health) = process.read::<u32>(local_player + C_BaseEntity::m_iHealth) else {
@@ -109,7 +95,6 @@ impl Player {
             weapon: Weapon::from(weapon_id),
             flags,
             is_scopped,
-            entity_index,
             base_address: local_player,
         })
     }
@@ -146,31 +131,26 @@ impl Entity {
         };
 
         for i in 0..64 {
-            let Ok(entry) = process.read::<usize>(entity_list + 0x8 * (i >> 9) + 0x10) else {
+            let Ok(entry) = process.read_n::<usize>(entity_list + 0x8 * (i >> 9) + 0x10) else {
                 continue;
             };
 
-            let Ok(controller) = process.read::<usize>(entry + 120 * (i & 0x1FF)) else {
+            let Ok(controller) = process.read_n::<usize>(entry + 120 * (i & 0x1FF)) else {
                 continue;
             };
 
             let Ok(pawn_handle) =
-                process.read::<usize>(controller + CCSPlayerController::m_hPlayerPawn)
+                process.read_n::<usize>(controller + CCSPlayerController::m_hPlayerPawn)
             else {
                 continue;
             };
 
             if let Ok(pawn_entry) =
-                process.read::<usize>(entity_list + 0x8 * ((pawn_handle & 0x7FFF) >> 9) + 0x10)
+                process.read_n::<usize>(entity_list + 0x8 * ((pawn_handle & 0x7FFF) >> 9) + 0x10)
             {
-                match process.read::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FF)) {
+                match process.read_n::<usize>(pawn_entry + 120 * (pawn_handle & 0x1FF)) {
                     Ok(pawn) => {
-                        // let Ok(health) = process.read::<u32>(pawn + C_BaseEntity::m_iHealth) else {
-                        //     return None;
-                        // };
-                        let Ok(health) =
-                            process.read::<u32>(controller + CCSPlayerController::m_iPawnHealth)
-                        else {
+                        let Ok(health) = process.read::<u32>(pawn + C_BaseEntity::m_iHealth) else {
                             return None;
                         };
 
