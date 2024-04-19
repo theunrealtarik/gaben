@@ -99,7 +99,6 @@ impl Process {
         }
 
         unsafe { CloseHandle(snap_handle).unwrap() };
-        log::info!("{:?}", base_module);
         Ok(Self {
             process_id,
             process_handle,
@@ -285,8 +284,6 @@ impl Window {
         }
 
         let mut rect = windows::Win32::Foundation::RECT::default();
-
-        log::info!("HWND {:?}", handle);
 
         if let Err(err) = unsafe { GetWindowRect(handle, &mut rect) } {
             log::error!("failed to retreive {:?} window rect", name);

@@ -6,22 +6,9 @@ use sdk::prelude::*;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 
-#[cfg(target_os = "windows")]
-fn main() -> Result<(), anyhow::Error> {
-    logger::init_env();
-    Keyboard::listen();
-
-    let process = Process::new(CS_PROCESS_NAME).unwrap_or_else(|err| {
-        log::error!("{}", err);
-        std::process::exit(1);
-    });
-
-    let window = Window::find(CS_MAIN_WINDOW_NAME).unwrap_or_else(|err| {
-        log::error!("{}", err.message());
-        std::process::exit(1);
-    });
-
+fn attach(process: Process, window: Window) {
     let window = Arc::new(window);
     let process = Arc::new(process);
 
@@ -77,6 +64,29 @@ fn main() -> Result<(), anyhow::Error> {
             continuous.run(Arc::clone(&process), player, entities);
         }
     }
+}
 
-    Ok(())
+#[cfg(target_os = "windows")]
+fn main() {
+    logger::init_env();
+    Keyboard::listen();
+
+    log::info!("monitoring ...");
+    loop {
+        thread::sleep(Duration::from_secs(1));
+
+        let Ok(process) = Process::new(CS_PROCESS_NAME) else {
+            log::error!("CS2 IS NOT RUNNING...");
+            continue;
+        };
+
+        let Ok(window) = Window::find(CS_MAIN_WINDOW_NAME) else {
+            continue;
+        };
+
+        log::info!("CS2 PROCESS WAS FOUND ({:?})", process.process_handle);
+        log::info!("CS2 WINDOW WAS FOUND ({:?})", window.handle());
+
+        attach(process, window);
+    }
 }
