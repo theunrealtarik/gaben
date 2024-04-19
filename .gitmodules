@@ -1,0 +1,3 @@
+[submodule "external/cs2-dumper"]
+	path = external/cs2-dumper
+	url = https://github.com/a2x/cs2-dumper
