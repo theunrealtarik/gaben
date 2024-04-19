@@ -21,9 +21,7 @@ impl Timer {
     }
 
     pub fn elapsed(&mut self, duration: Duration) -> bool {
-        let now = Instant::now();
-        let delta = now - self.0;
-        if delta > duration {
+        if self.0.elapsed() > duration {
             self.0 = Instant::now();
             true
         } else {
@@ -112,6 +110,7 @@ mod time {
 
     #[test]
     fn timer_every() {
+        let start = Instant::now();
         let mut timer = Timer::default();
         let mut count = 0;
 
@@ -124,6 +123,9 @@ mod time {
                 break;
             }
         }
+
+        let delta = Instant::now() - start;
         assert_eq!(count, 5);
+        assert!(delta >= Duration::from_secs(5))
     }
 }

@@ -118,7 +118,7 @@ impl ContinuousPunishments {
 
         if spotted_entities > 0
             && MouseButton::LeftButton.is_pressed()
-            && rng.gen_bool(0.4)
+            && rng.gen_bool(0.1)
             && !player.weapon().is_throwable()
             && !player.weapon().is_knife()
         {
@@ -152,10 +152,6 @@ impl ContinuousPunishments {
             return;
         };
 
-        let Ok(pawn) = process.read::<usize>(entry + 0x78 * (entity_id & 0x1FF)) else {
-            return;
-        };
-
         let Ok(controller) = process.read_n::<usize>(entry + 120 * (entity_id & 0x1FF)) else {
             return;
         };
@@ -165,13 +161,7 @@ impl ContinuousPunishments {
             Err(_) => return,
         };
 
-        let Ok(entity_is_alive) =
-            process.read::<bool>(pawn + offsets::CCSPlayerController::m_bPawnIsAlive)
-        else {
-            return;
-        };
-
-        if entity_team.is_unknown() || !entity_is_alive {
+        if entity_team.is_unknown() {
             return;
         }
 

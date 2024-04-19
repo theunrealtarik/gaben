@@ -6,20 +6,40 @@ use std::{
     time::Duration,
 };
 
+#[cfg(debug_assertions)]
+const PUNISHMENT_INTERVAL_DURATION: Duration = Duration::from_secs(30);
+#[cfg(debug_assertions)]
+const PUNISHMENT_SPAN_MIN_DURATION: u64 = 5;
+#[cfg(debug_assertions)]
+const PUNISHMENT_SPAN_MAX_DURATION: u64 = 10;
+
+#[cfg(not(debug_assertions))]
+const PUNISHMENT_INTERVAL_DURATION: Duration = Duration::from_secs(60 * 2);
+#[cfg(not(debug_assertions))]
+const PUNISHMENT_SPAN_MIN_DURATION: u64 = 15;
+#[cfg(not(debug_assertions))]
+const PUNISHMENT_SPAN_MAX_DURATION: u64 = 30;
+
 /// Responsible for scheduling periodic punishments
 pub struct PeriodicPunishments {
     punishments: Punishments,
     span_timer: Timer,
     interval_timer: Timer,
+    rng: ThreadRng,
     busy: bool,
 }
 
 impl PeriodicPunishments {
     pub fn new() -> Self {
+        let mut punishments = Punishments::new();
+        punishments.add(Box::new(BunnyMan::new()));
+        punishments.add(Box::new(Tianeptine::new()));
+
         Self {
-            punishments: Punishments::new(),
+            punishments,
             span_timer: Timer::default(),
             interval_timer: Timer::default(),
+            rng: rand::thread_rng(),
             busy: false,
         }
     }
@@ -32,20 +52,26 @@ impl PunishmentsExecutor for PeriodicPunishments {
         player: Arc<Option<Player>>,
         entities: Arc<Option<Vec<Entity>>>,
     ) {
-        let mut rng = rand::thread_rng();
-        let mut span = self.span_timer;
-        let mut interval = self.interval_timer;
+        let interval = &mut self.interval_timer;
+        let span = &mut self.span_timer;
 
-        if interval.elapsed(Duration::from_secs(60 * 2)) {
+        if interval.elapsed(PUNISHMENT_INTERVAL_DURATION) {
             span.reset();
             self.busy = true;
-            self.punishments.next();
+            if let Some(p) = self.punishments.next() {
+                log::debug!("elapsed on {:?}", p.name());
+            };
         }
 
-        if span.elapsed(Duration::from_secs(rng.gen_range(15..=30))) && self.busy {
+        if span
+            .elapsed(Duration::from_secs(self.rng.gen_range(
+                PUNISHMENT_SPAN_MIN_DURATION..=PUNISHMENT_SPAN_MAX_DURATION,
+            )))
+            && self.busy
+        {
             self.busy = false;
             if let Some(prev_punishment) = self.punishments.prev() {
-                log::info!("withdraw {:?}", prev_punishment.name());
+                log::debug!("withdraw {:?}", prev_punishment.name());
                 prev_punishment.withdraw(&process, &player, &entities)
             }
         }
@@ -156,8 +182,9 @@ impl Punishment for Tianeptine {
             if let Ok(camera_services) =
                 process.read::<usize>(player.base_address() + CAMERA_SERVICES)
             {
-                let bytes = process.write(camera_services + I_FOV, DEFAULT_FOV);
-                dbg!(&bytes);
+                process
+                    .write(camera_services + I_FOV, DEFAULT_FOV)
+                    .unwrap_or_else(|_| (0));
             }
         }
     }

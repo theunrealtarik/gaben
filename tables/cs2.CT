@@ -51,10 +51,37 @@
     </CheatEntry>
     <CheatEntry>
       <ID>15</ID>
-      <Description>"No description"</Description>
+      <Description>"fire"</Description>
       <ShowAsSigned>0</ShowAsSigned>
       <VariableType>4 Bytes</VariableType>
       <Address>client.dll + 0x172F0F0</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>16</ID>
+      <Description>"is in game"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>8 Bytes</VariableType>
+      <Address>engine2.dll + 0x514AC8</Address>
+      <Offsets>
+        <Offset>0x240</Offset>
+      </Offsets>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>17</ID>
+      <Description>"No description"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>4 Bytes</VariableType>
+      <Address>client.dll + 0x172EFD0</Address>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>18</ID>
+      <Description>"location"</Description>
+      <ShowAsSigned>0</ShowAsSigned>
+      <VariableType>Byte</VariableType>
+      <Address>client.dll + 0x17361E8</Address>
+      <Offsets>
+        <Offset>0x1754</Offset>
+      </Offsets>
     </CheatEntry>
   </CheatEntries>
   <UserdefinedSymbols/>

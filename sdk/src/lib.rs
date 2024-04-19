@@ -80,10 +80,6 @@ pub mod punishments {
             self.elements.push(p);
         }
 
-        pub fn active(&self) -> Option<&Box<dyn Punishment>> {
-            self.elements.get(self.curr_index)
-        }
-
         pub fn next(&mut self) -> Option<&Box<dyn Punishment>> {
             let length = self.elements.len();
 
