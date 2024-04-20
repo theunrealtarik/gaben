@@ -39,14 +39,7 @@ fn attach(process: Process, window: Window) {
     loop {
         #[cfg(debug_assertions)]
         {
-            if Key::LKey.is_pressed() {
-                log::debug!("window focus {:?}", window.is_focused());
-            }
-
-            if Key::EndKey.is_pressed()
-                || (!window.is_focused() && Key::LControlKey.is_pressed() && Key::CKey.is_pressed())
-            {
-                log::warn!("self killed");
+            if Key::EndKey.is_pressed() {
                 break;
             }
         }
@@ -90,5 +83,13 @@ fn main() {
         log::info!("CS2 WINDOW WAS FOUND ({:?})", window.handle());
 
         attach(process, window);
+
+        #[cfg(debug_assertions)]
+        {
+            if Key::EndKey.is_pressed() {
+                log::warn!("SELF KILLED");
+                break;
+            }
+        }
     }
 }

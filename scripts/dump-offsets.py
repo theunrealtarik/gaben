@@ -4,7 +4,8 @@ import os
 import re
 
 current_dir = os.getcwd()
-dumper_path = os.path.join(current_dir, "sdk", "external", "cs2-dumper.exe")
+dumper_path = os.path.join(current_dir, "external", "cs2-dumper.exe")
+print(dumper_path)
 
 directory_path = os.path.join(
     current_dir, "sdk", "src", "offsets", "generated")

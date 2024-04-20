@@ -77,7 +77,7 @@ impl PunishmentsExecutor for PeriodicPunishments {
         }
 
         if self.busy {
-            if let Some(p) = self.punishments.prev() {
+            if let Some(p) = self.punishments.prev_mut() {
                 p.action(&process, &player, &entities);
             }
         }
@@ -109,7 +109,7 @@ impl Punishment for BunnyMan {
         &self.name
     }
 
-    fn action(&self, process: &Process, player: &Option<Player>, _: &Option<Vec<Entity>>) {
+    fn action(&mut self, process: &Process, player: &Option<Player>, _: &Option<Vec<Entity>>) {
         let client = process.modules.get("client.dll").unwrap();
         let force_jump = client.address + offsets::buttons::jump;
 
@@ -132,7 +132,6 @@ impl Punishment for BunnyMan {
     }
 }
 
-const ZAZA_FOV: u32 = 200;
 const DEFAULT_FOV: u32 = 68;
 const CAMERA_SERVICES: usize = offsets::C_BasePlayerPawn::m_pCameraServices;
 const I_FOV: usize = offsets::CCSPlayerBase_CameraServices::m_iFOV;
@@ -143,7 +142,6 @@ const I_FOV: usize = offsets::CCSPlayerBase_CameraServices::m_iFOV;
 pub struct Tianeptine {
     schedule: PunishmentSchedule,
     name: String,
-    default_fov: Mutex<Option<u32>>,
 }
 
 impl Punishment for Tianeptine {
@@ -155,7 +153,7 @@ impl Punishment for Tianeptine {
         &self.name
     }
 
-    fn action(&self, process: &Process, player: &Option<Player>, _: &Option<Vec<Entity>>) {
+    fn action(&mut self, process: &Process, player: &Option<Player>, _: &Option<Vec<Entity>>) {
         let Some(player) = player else {
             return;
         };
@@ -165,16 +163,11 @@ impl Punishment for Tianeptine {
             return;
         };
 
-        let mut default_fov = self.default_fov.lock().unwrap();
-        if default_fov.is_none() {
-            *default_fov = process.read::<u32>(camera_services + I_FOV).ok();
+        if *player.is_scopped() || !*player.is_alive() {
+            return;
         }
 
-        if !*player.is_scopped() {
-            process
-                .write(camera_services + I_FOV, ZAZA_FOV)
-                .unwrap_or_else(|_| 0);
-        }
+        process.write::<u32>(camera_services + I_FOV, 200).unwrap();
     }
 
     fn withdraw(&self, process: &Process, player: &Option<Player>, _: &Option<Vec<Entity>>) {
@@ -182,9 +175,7 @@ impl Punishment for Tianeptine {
             if let Ok(camera_services) =
                 process.read::<usize>(player.base_address() + CAMERA_SERVICES)
             {
-                process
-                    .write(camera_services + I_FOV, DEFAULT_FOV)
-                    .unwrap_or_else(|_| (0));
+                process.write(camera_services + I_FOV, DEFAULT_FOV).unwrap();
             }
         }
     }

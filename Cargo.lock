@@ -362,6 +362,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "installer"
+version = "0.1.0"
+
+[[package]]
 name = "ioctl-sys"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

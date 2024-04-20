@@ -38,7 +38,7 @@ pub mod punishments {
         fn schedule(&self) -> &PunishmentSchedule;
         fn name(&self) -> &String;
         fn action(
-            &self,
+            &mut self,
             process: &Process,
             player: &Option<Player>,
             entities: &Option<Vec<Entity>>,
@@ -96,6 +96,13 @@ pub mod punishments {
         pub fn prev(&self) -> Option<&Box<dyn Punishment>> {
             match self.prev_index {
                 Some(index) => self.elements.get(index),
+                None => None,
+            }
+        }
+
+        pub fn prev_mut(&mut self) -> Option<&mut Box<dyn Punishment>> {
+            match self.prev_index {
+                Some(index) => self.elements.get_mut(index),
                 None => None,
             }
         }

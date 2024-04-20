@@ -35,7 +35,7 @@ impl PunishmentsExecutor for ContinuousPunishments {
                 Self::apply_heavy_knife_punishment(player);
                 Self::apply_cursed_snipers_punishment(player);
                 Self::apply_slippery_nades_punishment(player);
-                Self::apply_grasshopper_punishment(player);
+                Self::apply_grasshopper_punishment(process, player);
 
                 if let Some(entities) = entities.as_ref() {
                     Self::apply_slippery_weapons_punishment(player, entities);
@@ -62,6 +62,7 @@ impl ContinuousPunishments {
         let client = modules.get("client.dll").unwrap().address;
 
         if player.weapon().is_molotov() || player.weapon().is_incendiary() {
+            MouseCursor::move_abs(0, 10_000);
             process
                 .write(client + offsets::buttons::attack2, Modifier::Plus)
                 .unwrap();
@@ -182,13 +183,22 @@ impl ContinuousPunishments {
     /// *The Grasshopper*
     /// This punishment prevents cheater form using the glock and keep spamming the right click
     /// button
-    fn apply_grasshopper_punishment(player: &Player) {
+    fn apply_grasshopper_punishment(process: &Process, player: &Player) {
+        let client = process.modules.get("client.dll").unwrap();
         if player.weapon().is_glock() {
-            MouseButton::RightButton.press();
+            process
+                .write::<i32>(
+                    client.address + offsets::buttons::attack2,
+                    Modifier::Plus as i32,
+                )
+                .unwrap();
         } else {
-            if MouseButton::RightButton.is_pressed() {
-                MouseButton::RightButton.release();
-            }
+            process
+                .write::<i32>(
+                    client.address + offsets::buttons::attack2,
+                    Modifier::Minus as i32,
+                )
+                .unwrap();
         }
     }
 }

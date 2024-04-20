@@ -3,4 +3,5 @@
 sdk/src/offsets/generated/*.rs
 sdk/src/offsets/generated/mod.rs
 sdk/external/output
+/installer
 *.exe
