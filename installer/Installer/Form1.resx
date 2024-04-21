@@ -117,4 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Paragraph.Text" xml:space="preserve">
+    <value>Welcome to Gaben's installer. Please initiate the installation process by clicking the designated 'Install' button below. Allow us to seamlessly handle all subsequent procedures, ensuring the comprehensive installation of requisite components for the smooth operation of the cheat software, VAC circumvention, and Steam patching. Your patience during this brief installation period is greatly appreciated.</value>
+  </data>
 </root>

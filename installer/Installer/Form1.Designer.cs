@@ -1,6 +1,6 @@
 ﻿namespace Installer
 {
-    partial class Form1
+    partial class Window
     {
         /// <summary>
         ///  Required designer variable.
@@ -28,44 +28,63 @@
         /// </summary>
         private void InitializeComponent()
         {
-            installButton = new Button();
-            label1 = new Label();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Window));
+            InstallButton = new Button();
+            ResponseLabel = new Label();
+            Paragraph = new Label();
             SuspendLayout();
             // 
-            // installButton
+            // InstallButton
             // 
-            installButton.Location = new Point(83, 94);
-            installButton.Name = "installButton";
-            installButton.Size = new Size(94, 29);
-            installButton.TabIndex = 0;
-            installButton.Text = "Install";
-            installButton.UseVisualStyleBackColor = true;
-            installButton.Click += InstallButton_Click;
+            InstallButton.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            InstallButton.Location = new Point(346, 129);
+            InstallButton.Margin = new Padding(3, 2, 3, 2);
+            InstallButton.Name = "InstallButton";
+            InstallButton.Size = new Size(82, 22);
+            InstallButton.TabIndex = 0;
+            InstallButton.Text = "Install";
+            InstallButton.UseVisualStyleBackColor = true;
+            InstallButton.Click += InstallButton_Click;
             // 
-            // label1
+            // ResponseLabel
             // 
-            label1.AutoSize = true;
-            label1.Location = new Point(83, 71);
-            label1.Name = "label1";
-            label1.Size = new Size(0, 20);
-            label1.TabIndex = 1;
+            ResponseLabel.AutoSize = true;
+            ResponseLabel.Location = new Point(12, 108);
+            ResponseLabel.Name = "ResponseLabel";
+            ResponseLabel.Size = new Size(0, 15);
+            ResponseLabel.TabIndex = 1;
             // 
-            // Form1
+            // Paragraph
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            Paragraph.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            Paragraph.Location = new Point(12, 9);
+            Paragraph.Name = "Paragraph";
+            Paragraph.Size = new Size(416, 114);
+            Paragraph.TabIndex = 2;
+            Paragraph.Text = resources.GetString("Paragraph.Text");
+            // 
+            // Window
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
-            Controls.Add(label1);
-            Controls.Add(installButton);
-            Name = "Form1";
-            Text = "Form1";
+            ClientSize = new Size(440, 162);
+            Controls.Add(Paragraph);
+            Controls.Add(ResponseLabel);
+            Controls.Add(InstallButton);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            Margin = new Padding(3, 2, 3, 2);
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "Window";
+            Text = "Gaben Installer";
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
 
-        private Button installButton;
-        private Label label1;
+        private Button InstallButton;
+        private Label ResponseLabel;
+        private Label Paragraph;
     }
 }
