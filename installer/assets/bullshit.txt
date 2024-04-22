@@ -1,0 +1,1 @@
+This installtion program will aquire and set up all mendatory components to ensure that Gaben runs flawlessly on your system. It includes a VAC bypass, patch Steam and optionally install a kernel driver for maxium security. To commence installation, please click the disguised 'Install' button down below.

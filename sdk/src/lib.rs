@@ -1,10 +1,17 @@
+#[cfg(feature = "game")]
 pub mod game;
+#[cfg(feature = "inputs")]
 pub mod inputs;
+#[cfg(feature = "memory")]
 pub mod memory;
+#[cfg(feature = "offsets")]
 pub mod offsets;
+#[cfg(feature = "time")]
 pub mod time;
+#[cfg(feature = "types")]
 pub mod types;
 
+#[cfg(feature = "all")]
 pub mod prelude {
     pub const CS_PROCESS_NAME: &str = "cs2.exe";
     pub const CS_MAIN_WINDOW_NAME: &str = "Counter-Strike 2";
@@ -19,6 +26,7 @@ pub mod prelude {
     pub use super::utils::*;
 }
 
+#[cfg(feature = "punishments")]
 pub mod punishments {
     use std::sync::Arc;
 
@@ -109,6 +117,7 @@ pub mod punishments {
     }
 }
 
+#[cfg(feature = "utils")]
 pub mod utils {
     pub fn stringify_bytes_u8<T>(bytes: T) -> String
     where
@@ -136,15 +145,17 @@ pub mod utils {
     }
 }
 
+#[cfg(feature = "logger")]
 pub mod logger {
     pub use env_logger;
     use env_logger::Env;
+    pub use log;
 
     pub struct Logger;
     impl Logger {
         pub fn env() -> Env<'static> {
             let env = Env::default()
-                .filter_or("RUST_LOG", "sdk=trace,gaben=trace")
+                .filter_or("RUST_LOG", "sdk=trace,gaben=trace,installer=trace")
                 .write_style_or("RUST_STYLE_LOG", "always");
             env
         }

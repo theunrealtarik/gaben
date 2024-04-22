@@ -3,15 +3,26 @@ name = "sdk"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+game = []
+inputs = []
+memory = []
+offsets = []
+punishments = []
+time = []
+types = []
+utils = []
+logger = []
+all = ["game", "inputs", "memory", "offsets", "punishments", "time", "types", "utils", "logger"]
 
 [dependencies]
 inputbot = "0.6.0"
-strum = "0.26.2"
-strum_macros = "0.26.2"
+strum = { workspace = true }
+strum_macros = { workspace = true }
 sysinfo = "0.30.7"
 ambassador = "0.3.6"
 derive-getters = { workspace = true }
-derive_builder = "0.20.0"
+derive_builder = { workspace = true }
 rand = "0.8.5"
 log = { workspace = true }
 env_logger = { workspace = true }
