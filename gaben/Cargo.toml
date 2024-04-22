@@ -10,3 +10,6 @@ derive-getters = { workspace = true }
 log = { workspace = true }
 sdk = { path = "../sdk", features = ["all"] }
 macros = { path = "../macros" }
+
+[build-dependencies]
+winres = "0.1.12"

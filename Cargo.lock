@@ -1685,6 +1685,7 @@ dependencies = [
  "macros",
  "rand",
  "sdk",
+ "winres",
 ]
 
 [[package]]

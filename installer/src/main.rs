@@ -178,7 +178,10 @@ impl Window {
                         };
                     }
 
-                    log::debug!("{:?}", self.fallback);
+                    #[cfg(debug_assertions)]
+                    {
+                        log::debug!("{:?}", self.fallback);
+                    }
                 });
             });
         });
