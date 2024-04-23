@@ -17,7 +17,7 @@ use std::{fs::File, io::Write, path::PathBuf, time::Duration};
 use windows::core::s;
 use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONINFORMATION, MB_OK};
 
-use_litcrypt!("6D2AA05BB3EE41964F1830CD70F9AEF0B36A0138E5116F4B64D00A960AB11053");
+use_litcrypt!();
 
 const WINDOW_WIDTH: f32 = 600.0;
 const WINDOW_HEIGHT: f32 = 450.0;
