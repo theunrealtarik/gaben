@@ -13,3 +13,10 @@ macros = { path = "../macros" }
 
 [build-dependencies]
 winres = "0.1.12"
+
+[package.metadata.winres]
+OriginalFilename = "GABEN.EXE"
+LegalCopyright = "Copyright © 2024"
+FileDescription="¯\\_(ツ)_/¯"
+ProductName="gaben"
+ProductVersion="1.0.0"

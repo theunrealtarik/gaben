@@ -1,9 +1,8 @@
+use std::path::PathBuf;
 use winres::*;
 
 #[cfg(target_os = "windows")]
 fn main() {
-    use std::path::PathBuf;
-
     let icon = PathBuf::from("./assets/installer.ico");
     let manifest = PathBuf::from("./assets/app.manifest");
 
