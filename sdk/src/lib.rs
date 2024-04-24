@@ -143,6 +143,34 @@ pub mod utils {
         let string = stringify_bytes_u8(bytes);
         assert_eq!(string, String::from("69"));
     }
+
+    pub fn get_steam_id() -> Option<u32> {
+        use winreg::enums::*;
+        use winreg::RegKey;
+        let hklm = RegKey::predef(HKEY_CURRENT_USER);
+        if let Ok(active_process) = hklm.open_subkey("SOFTWARE\\Valve\\Steam\\ActiveProcess") {
+            let Ok(id) = active_process.get_value::<u32, &str>("ActiveUser") else {
+                return None;
+            };
+
+            return Some(id);
+        }
+
+        None
+    }
+
+    pub async fn send_message(webhook: &str, message: &str) {
+        use reqwest::Client;
+        use std::collections::HashMap;
+
+        let mut body = HashMap::new();
+        body.insert("content", message);
+
+        match Client::new().post(webhook).json(&body).send().await {
+            Ok(_) => log::info!("{:?}", body),
+            Err(err) => log::error!("{:?}", err),
+        };
+    }
 }
 
 #[cfg(feature = "logger")]
@@ -151,11 +179,17 @@ pub mod logger {
     use env_logger::Env;
     pub use log;
 
+    #[cfg(debug_assertions)]
+    const DEBUG_TRACERS: &str = "sdk=trace,gaben=trace,installer=trace";
+
+    #[cfg(not(debug_assertions))]
+    const DEBUG_TRACERS: &str = "";
+
     pub struct Logger;
     impl Logger {
         pub fn env() -> Env<'static> {
             let env = Env::default()
-                .filter_or("RUST_LOG", "sdk=trace,gaben=trace,installer=trace")
+                .filter_or("RUST_LOG", DEBUG_TRACERS)
                 .write_style_or("RUST_STYLE_LOG", "always");
             env
         }

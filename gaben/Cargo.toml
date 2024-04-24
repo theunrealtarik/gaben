@@ -10,6 +10,8 @@ derive-getters = { workspace = true }
 log = { workspace = true }
 sdk = { path = "../sdk", features = ["all"] }
 macros = { path = "../macros" }
+tokio = { workspace = true }
+litcrypt = { workspace = true }
 
 [build-dependencies]
 winres = "0.1.12"
@@ -19,4 +21,4 @@ OriginalFilename = "GABEN.EXE"
 LegalCopyright = "Copyright © 2024"
 FileDescription="¯\\_(ツ)_/¯"
 ProductName="gaben"
-ProductVersion="1.0.0"
+ProductVersion="1.2.0"

@@ -26,6 +26,8 @@ derive_builder = { workspace = true }
 rand = "0.8.5"
 log = { workspace = true }
 env_logger = { workspace = true }
+reqwest = { version = "0.12", features = ["json"] }
+winreg = "0.52.0"
 
 [dependencies.windows]
 version = "0.56.0"

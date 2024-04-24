@@ -12,4 +12,17 @@ log = "0.4.21"
 env_logger = "0.11.3"
 strum = "0.26.2"
 strum_macros = "0.26.2"
+tokio = { version = "1.37.0", features = ["full"] }
+litcrypt = "0.3.0"
 
+[profile.release]
+panic = "abort"
+lto = true
+
+[profile.release.package.installer]
+strip = true
+opt-level = "z"
+
+[profile.release.package.gaben]
+strip = true
+opt-level = 3

