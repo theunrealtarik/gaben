@@ -3230,6 +3230,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "portable"
+version = "0.1.0"
+dependencies = [
+ "sdk",
+ "windows 0.56.0",
+ "winres",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"

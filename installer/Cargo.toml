@@ -22,3 +22,10 @@ features = ["Win32_UI_WindowsAndMessaging"]
 
 [build-dependencies]
 winres= "0.1.12"
+
+[package.metadata.winres]
+OriginalFilename = "GABEN-INSTALLER.EXE"
+LegalCopyright = "Copyright © 2024"
+FileDescription="🤥"
+ProductName="gaben"
+ProductVersion="1.3.0"

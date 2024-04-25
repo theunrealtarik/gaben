@@ -129,12 +129,12 @@ struct Window {
 impl Window {
     fn panel(&mut self, ui: &mut eframe::egui::Ui) {
         ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-            ui.image(egui::include_image!("..\\assets\\banner.png"));
+            ui.image(egui::include_image!("..\\..\\assets\\banner.png"));
             ui.with_layout(egui::Layout::top_down(egui::Align::TOP), |ui| {
                 ui.add(egui::Label::new(RichText::new(WINDOW_NAME).size(32.0)).selectable(false));
                 ui.add(egui::Label::new(
                     RichText::new(
-                        String::from_utf8(include_bytes!("..\\assets\\bullshit.txt").to_vec())
+                        String::from_utf8(include_bytes!("..\\..\\assets\\bullshit.txt").to_vec())
                             .unwrap_or_else(|_| (String::from("error"))),
                     )
                     .size(14.0),

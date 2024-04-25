@@ -2,7 +2,7 @@
 members = [
 	"gaben",
 	"sdk",
-	"macros", "installer",
+	"macros", "installer", "portable",
 ]
 
 [workspace.dependencies]

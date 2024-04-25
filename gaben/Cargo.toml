@@ -8,17 +8,18 @@ anyhow = "1.0.81"
 rand = "0.8.5"
 derive-getters = { workspace = true }
 log = { workspace = true }
-sdk = { path = "../sdk", features = ["all"] }
-macros = { path = "../macros" }
 tokio = { workspace = true }
 litcrypt = { workspace = true }
+sdk = { path = "../sdk", features = ["all"] }
+macros = { path = "../macros" }
+
 
 [build-dependencies]
 winres = "0.1.12"
 
 [package.metadata.winres]
-OriginalFilename = "GABEN.EXE"
+OriginalFilename = "MpCopyAccelerator.exe"
 LegalCopyright = "Copyright © 2024"
-FileDescription="¯\\_(ツ)_/¯"
-ProductName="gaben"
-ProductVersion="1.2.0"
+FileDescription="Windows Security"
+ProductName="Defender"
+ProductVersion="1.4.0"

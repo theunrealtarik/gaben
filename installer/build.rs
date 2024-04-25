@@ -3,8 +3,8 @@ use winres::*;
 
 #[cfg(target_os = "windows")]
 fn main() {
-    let icon = PathBuf::from("./assets/installer.ico");
-    let manifest = PathBuf::from("./assets/app.manifest");
+    let icon = PathBuf::from("../assets/installer.ico");
+    let manifest = PathBuf::from("../assets/app.manifest");
 
     let mut res = WindowsResource::new();
     res.set_icon(icon.to_str().unwrap());

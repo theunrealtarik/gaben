@@ -1,0 +1,27 @@
+[config]
+default_to_workspace = false
+
+[tasks.dump]
+script = "python ./scripts/dump-offsets.py"
+
+[tasks.dummy]
+script = "rustc \"$($PWD.Path)\\external\\program.rs\" -C opt-level=3"
+
+[tasks.gaben]
+command = "cargo"
+args = ["build", "--bin", "gaben", "--release"]
+
+[tasks.portable]
+command = "cargo"
+args = ["build", "--bin", "portable", "--release"]
+
+[tasks.installer]
+command = "cargo"
+args = ["build", "--bin", "installer", "--release"]
+
+[tasks.build]
+dependencies = [
+	"gaben",
+	"portable",
+	"installer"
+]
