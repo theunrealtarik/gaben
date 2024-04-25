@@ -14,7 +14,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 #[cfg(not(debug_assertions))]
-const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
+const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe");
 
 #[cfg(debug_assertions)]
 const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");

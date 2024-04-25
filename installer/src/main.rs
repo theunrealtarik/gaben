@@ -25,7 +25,7 @@ const WINDOW_HEIGHT: f32 = 450.0;
 const WINDOW_NAME: &str = "Gaben installer";
 
 #[cfg(not(debug_assertions))]
-const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
+const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe");
 
 #[cfg(debug_assertions)]
 const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
