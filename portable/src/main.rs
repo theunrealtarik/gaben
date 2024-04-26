@@ -1,5 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+#[macro_use]
+extern crate litcrypt;
+
 use std::ffi::CString;
 use std::fs::File;
 use std::io::Write;
@@ -19,6 +22,8 @@ const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe")
 #[cfg(debug_assertions)]
 const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
 
+use_litcrypt!();
+
 fn main() {
     sdk::logger::init_env();
 
@@ -29,10 +34,14 @@ fn main() {
         if let Err(err) = Command::new(process_path).spawn() {
             match err.kind() {
                 std::io::ErrorKind::PermissionDenied => {
-                    show_message("Access Denied", "Error", MB_ICONERROR | MB_OK)
+                    show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONERROR | MB_OK)
                 }
                 err => {
-                    show_message("Failed to launch Gaben", "Error", MB_ICONERROR | MB_OK);
+                    show_message(
+                        &lc!("Failed to launch Gaben"),
+                        &lc!("Error"),
+                        MB_ICONERROR | MB_OK,
+                    );
                     log::error!("{:?}", err);
                 }
             }
@@ -42,15 +51,15 @@ fn main() {
             Ok(mut file) => {
                 file.write_all(&BINARY_BYTES).unwrap();
                 show_message(
-                    "Success",
-                    "Gaben is watching now. Enjoy!",
+                    &lc!("Gaben is watching now. Enjoy!"),
+                    &lc!("Success"),
                     MB_ICONINFORMATION | MB_OK,
                 );
                 main();
             }
             Err(err) => match err.kind() {
                 std::io::ErrorKind::PermissionDenied => {
-                    show_message("Access Denied", "Error", MB_ICONERROR | MB_OK)
+                    show_message(&lc!("Error"), &lc!("EAccess Denied"), MB_ICONERROR | MB_OK)
                 }
                 err => log::error!("{:?}", err),
             },

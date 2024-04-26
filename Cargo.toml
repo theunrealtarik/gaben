@@ -15,6 +15,9 @@ strum_macros = "0.26.2"
 tokio = { version = "1.37.0", features = ["full"] }
 litcrypt = "0.3.0"
 
+[unstable]
+build-std = ["core", "alloc"]
+
 [profile.release]
 panic = "abort"
 lto = true
@@ -22,6 +25,9 @@ lto = true
 [profile.release.package.installer]
 strip = true
 opt-level = "z"
+
+[profile.release.package.portable]
+strip = true
 
 [profile.release.package.gaben]
 strip = true
