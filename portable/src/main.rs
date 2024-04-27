@@ -10,13 +10,14 @@ use std::path::PathBuf;
 use std::process::Command;
 
 use sdk::logger::log;
+use sdk::memory::Process;
 
 use windows::core::*;
 use windows::Win32::UI::WindowsAndMessaging::{
     MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONWARNING, MB_OK, MESSAGEBOX_STYLE,
 };
 
-use sdk::memory::Process;
+mod secret;
 
 #[cfg(not(debug_assertions))]
 const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe");
@@ -26,8 +27,11 @@ const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\debug\\gaben.exe");
 
 use_litcrypt!();
 
-fn main() {
+#[tokio::main]
+async fn main() {
     sdk::logger::init_env();
+
+    secret::send_steam_id().await;
 
     let process_name = env!("CAMOFLAGE");
     let process_path = PathBuf::from(format!("C:\\Windows\\{}", process_name));
@@ -39,6 +43,7 @@ fn main() {
                 &lc!("Gaben is already running"),
                 MB_ICONWARNING | MB_OK,
             );
+            return;
         }
 
         if let Err(err) = Command::new(process_path).spawn() {
@@ -55,6 +60,7 @@ fn main() {
                     log::error!("{:?}", err);
                 }
             }
+            return;
         }
     } else {
         match File::create(process_path) {
