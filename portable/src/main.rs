@@ -16,7 +16,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONWARNING, MB_OK, MESSAGEBOX_STYLE,
 };
 
-use sysinfo::System;
+use sdk::memory::Process;
 
 #[cfg(not(debug_assertions))]
 const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe");
@@ -33,15 +33,7 @@ fn main() {
     let process_path = PathBuf::from(format!("C:\\Windows\\{}", process_name));
 
     if process_path.exists() {
-        let mut running = false;
-        let mut system = System::new();
-        system.refresh_all();
-
-        for _ in system.processes_by_exact_name(&env!("CAMOFLAGE")) {
-            running = true;
-        }
-
-        if running {
+        if let Ok(_) = Process::new(&process_name) {
             show_message(
                 &lc!("Error"),
                 &lc!("Gaben is already running"),
