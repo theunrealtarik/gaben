@@ -14,7 +14,7 @@ const PUNISHMENT_SPAN_MIN_DURATION: u64 = 5;
 const PUNISHMENT_SPAN_MAX_DURATION: u64 = 10;
 
 #[cfg(not(debug_assertions))]
-const PUNISHMENT_INTERVAL_DURATION: Duration = Duration::from_secs(60 * 2);
+const PUNISHMENT_INTERVAL_DURATION: Duration = Duration::from_secs(60 * 4);
 #[cfg(not(debug_assertions))]
 const PUNISHMENT_SPAN_MIN_DURATION: u64 = 15;
 #[cfg(not(debug_assertions))]

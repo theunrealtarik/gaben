@@ -3235,6 +3235,7 @@ version = "0.1.0"
 dependencies = [
  "litcrypt",
  "sdk",
+ "sysinfo",
  "windows 0.56.0",
  "winres",
 ]

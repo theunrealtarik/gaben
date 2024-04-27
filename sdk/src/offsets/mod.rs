@@ -13,6 +13,7 @@ pub use client_dll::CCSPlayerController;
 pub use client_dll::C_AttributeContainer;
 pub use client_dll::C_BaseEntity;
 pub use client_dll::C_BasePlayerPawn;
+pub use client_dll::C_CSPlayerPawn;
 pub use client_dll::C_CSPlayerPawnBase;
 pub use client_dll::C_EconEntity;
 pub use client_dll::C_EconItemView;

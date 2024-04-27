@@ -19,6 +19,13 @@ args = ["build", "--bin", "portable", "--release"]
 command = "cargo"
 args = ["build", "--bin", "installer", "--release"]
 
+[tasks.build-debug]
+script = '''
+cargo build --bin gaben
+cargo build --bin portable
+cargo build --bin installer
+'''
+
 [tasks.build]
 dependencies = [
 	"gaben",

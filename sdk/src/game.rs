@@ -58,7 +58,7 @@ impl Player {
         };
 
         let is_scopped = process
-            .read::<bool>(local_player + C_CSPlayerPawnBase::m_bIsScoped)
+            .read::<bool>(local_player + C_CSPlayerPawn::m_bIsScoped)
             .unwrap_or_else(|_| false);
 
         let Ok(flags) = process.read::<u32>(local_player + C_BaseEntity::m_fFlags) else {
@@ -161,7 +161,7 @@ impl Entity {
                         };
 
                         let Ok(spotted) = process.read::<bool>(
-                            pawn + C_CSPlayerPawnBase::m_entitySpottedState
+                            pawn + C_CSPlayerPawn::m_entitySpottedState
                                 + EntitySpottedState_t::m_bSpotted,
                         ) else {
                             return None;

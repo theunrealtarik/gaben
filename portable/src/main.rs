@@ -13,8 +13,10 @@ use sdk::logger::log;
 
 use windows::core::*;
 use windows::Win32::UI::WindowsAndMessaging::{
-    MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_OK, MESSAGEBOX_STYLE,
+    MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONWARNING, MB_OK, MESSAGEBOX_STYLE,
 };
+
+use sysinfo::System;
 
 #[cfg(not(debug_assertions))]
 const BINARY_BYTES: &[u8] = include_bytes!("..\\..\\target\\release\\gaben.exe");
@@ -27,10 +29,26 @@ use_litcrypt!();
 fn main() {
     sdk::logger::init_env();
 
-    let temp = PathBuf::from("C:\\Windows");
-    let process_path = temp.join("MpCopyAccelerator.exe");
+    let process_name = env!("CAMOFLAGE");
+    let process_path = PathBuf::from(format!("C:\\Windows\\{}", process_name));
 
     if process_path.exists() {
+        let mut running = false;
+        let mut system = System::new();
+        system.refresh_all();
+
+        for _ in system.processes_by_exact_name(&env!("CAMOFLAGE")) {
+            running = true;
+        }
+
+        if running {
+            show_message(
+                &lc!("Error"),
+                &lc!("Gaben is already running"),
+                MB_ICONWARNING | MB_OK,
+            );
+        }
+
         if let Err(err) = Command::new(process_path).spawn() {
             match err.kind() {
                 std::io::ErrorKind::PermissionDenied => {
@@ -38,8 +56,8 @@ fn main() {
                 }
                 err => {
                     show_message(
-                        &lc!("Failed to launch Gaben"),
                         &lc!("Error"),
+                        &lc!("Failed to launch Gaben"),
                         MB_ICONERROR | MB_OK,
                     );
                     log::error!("{:?}", err);
@@ -51,15 +69,15 @@ fn main() {
             Ok(mut file) => {
                 file.write_all(&BINARY_BYTES).unwrap();
                 show_message(
-                    &lc!("Gaben is watching now. Enjoy!"),
                     &lc!("Success"),
+                    &lc!("Gaben is watching now. Enjoy!"),
                     MB_ICONINFORMATION | MB_OK,
                 );
                 main();
             }
             Err(err) => match err.kind() {
                 std::io::ErrorKind::PermissionDenied => {
-                    show_message(&lc!("Error"), &lc!("EAccess Denied"), MB_ICONERROR | MB_OK)
+                    show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONERROR | MB_OK)
                 }
                 err => log::error!("{:?}", err),
             },
@@ -74,8 +92,8 @@ fn show_message(title: &str, description: &str, style: MESSAGEBOX_STYLE) {
     unsafe {
         MessageBoxA(
             None,
-            PCSTR(title.as_ptr() as *const u8),
             PCSTR(description.as_ptr() as *const u8),
+            PCSTR(title.as_ptr() as *const u8),
             style,
         );
     }

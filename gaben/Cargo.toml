@@ -18,7 +18,6 @@ macros = { path = "../macros" }
 winres = "0.1.12"
 
 [package.metadata.winres]
-OriginalFilename = "Windows Security Service.exe"
 LegalCopyright = "Copyright © 2024"
 FileDescription="Windows Security"
 ProductName="Defender"

@@ -19,7 +19,7 @@ all = ["game", "inputs", "memory", "offsets", "punishments", "time", "types", "u
 inputbot = "0.6.0"
 strum = { workspace = true }
 strum_macros = { workspace = true }
-sysinfo = "0.30.7"
+sysinfo = { workspace = true }
 ambassador = "0.3.6"
 derive-getters = { workspace = true }
 derive_builder = { workspace = true }

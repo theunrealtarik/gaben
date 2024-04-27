@@ -1,3 +1,4 @@
 [env]
 LITCRYPT_ENCRYPT_KEY="..." # idk what is the best way to declare/read/deal w/ env vars in rust so f it
 WEBHOOK = "..." # no leaks
+CAMOFLAGE = "..."
