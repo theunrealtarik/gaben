@@ -9,7 +9,6 @@ edition = "2021"
 sdk = { path = "../sdk", features = ["logger", "memory"] }
 litcrypt = { workspace = true }
 tokio = { workspace = true }
-winreg = "0.52.0"
 goldberg = "0.1.0"
 
 [dependencies.windows]
