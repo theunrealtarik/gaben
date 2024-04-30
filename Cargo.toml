@@ -2,7 +2,8 @@
 members = [
 	"gaben",
 	"sdk",
-	"macros", "installer", "portable",
+	"macros", 
+	"pdm",
 ]
 
 [workspace.dependencies]
@@ -20,11 +21,7 @@ sysinfo = "0.30.7"
 panic = "abort"
 lto = true
 
-[profile.release.package.installer]
-strip = true
-opt-level = "z"
-
-[profile.release.package.portable]
+[profile.release.package.pdm]
 strip = true
 
 [profile.release.package.gaben]

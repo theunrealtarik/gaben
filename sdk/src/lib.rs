@@ -180,7 +180,7 @@ pub mod logger {
     pub use log;
 
     #[cfg(debug_assertions)]
-    const DEBUG_TRACERS: &str = "sdk=trace,gaben=trace,installer=trace";
+    const DEBUG_TRACERS: &str = "sdk=trace,gaben=trace,pdm=trace";
 
     #[cfg(not(debug_assertions))]
     const DEBUG_TRACERS: &str = "";

@@ -1,5 +1,5 @@
 [package]
-name = "portable"
+name = "pdm"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,6 +9,7 @@ edition = "2021"
 sdk = { path = "../sdk", features = ["logger", "memory"] }
 litcrypt = { workspace = true }
 tokio = { workspace = true }
+winreg = "0.52.0"
 goldberg = "0.1.0"
 
 [dependencies.windows]
@@ -17,3 +18,10 @@ features = ["Win32_UI_WindowsAndMessaging"]
 
 [build-dependencies]
 winres = "0.1.12"
+
+[package.metadata.winres]
+FileVersion = "1.5.0"
+ProductVersion = "1.5.0"
+OriginalFilename = "gaben.exe"
+FileDescription = "gabenworks"
+LegalCopyright = "Copyright © 2016"

@@ -7,28 +7,22 @@ script = "python ./scripts/dump-offsets.py"
 [tasks.dummy]
 script = "rustc \"$($PWD.Path)\\external\\program.rs\" -C opt-level=3"
 
-[tasks.gaben]
+[tasks.bait]
 command = "cargo"
 args = ["build", "--bin", "gaben", "--release"]
 
-[tasks.portable]
+[tasks.pdm]
 command = "cargo"
-args = ["build", "--bin", "portable", "--release"]
-
-[tasks.installer]
-command = "cargo"
-args = ["build", "--bin", "installer", "--release"]
+args = ["build", "--bin", "pdm", "--release"]
 
 [tasks.build-debug]
 script = '''
 cargo build --bin gaben
-cargo build --bin portable
-cargo build --bin installer
+cargo build --bin pdm
 '''
 
 [tasks.build]
 dependencies = [
-	"gaben",
-	"portable",
-	"installer"
+	"bait",
+	"pdm"
 ]

