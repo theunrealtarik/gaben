@@ -21,7 +21,7 @@ This software is intended for educational and ethical purposes only. The authors
 ## Credits
 
 - [@ScriptKid](https://www.youtube.com/@ScriptKid) - Original inspiration
-- [@txreqb2w](https://www.youtube.com/@txreqb2w) - Developer (me lol)
+- [me lol](https://www.youtube.com/@theunrealtarik) - Developer
 
 ## Support
 
